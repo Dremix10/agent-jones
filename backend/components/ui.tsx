@@ -64,7 +64,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cx(
-        "rounded-2xl shadow p-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-800 text-zinc-900 dark:text-zinc-100",
+        "rounded-2xl shadow p-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-800 text-zinc-900 dark:text-zinc-100 transition-colors",
         className
       )}
       {...props}
@@ -85,8 +85,8 @@ export function PrimaryButton({ className, ...props }: React.ButtonHTMLAttribute
     <button
       className={cx(
         "rounded-2xl shadow px-4 py-2 font-medium",
-        "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800",
-        "dark:bg-blue-500 dark:hover:bg-blue-400 dark:active:bg-blue-300",
+        "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition",
+        "dark:bg-blue-500 dark:hover:bg-blue-500 dark:active:bg-blue-300",
         className
       )}
       {...props}

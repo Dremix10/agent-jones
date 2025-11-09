@@ -136,11 +136,11 @@ export default function DemoPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
         <h2 className="text-lg font-semibold">Customer Demo</h2>
         <ThemeToggle />
       </div>
-      <main className="min-h-screen flex flex-col items-center justify-center p-6">
+      <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-2xl font-semibold text-center">
             AI Front Desk - Lead Demo
@@ -154,7 +154,7 @@ export default function DemoPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
                 <input
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-neutral-800 dark:border-neutral-700"
+                  className="w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 text-sm"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -167,7 +167,7 @@ export default function DemoPage() {
                   Phone number
                 </label>
                 <input
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-neutral-800 dark:border-neutral-700"
+                  className="w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 text-sm"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
@@ -180,7 +180,7 @@ export default function DemoPage() {
                   What do you need done?
                 </label>
                 <textarea
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-neutral-800 dark:border-neutral-700"
+                  className="w-full bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 text-sm"
                   rows={3}
                   value={jobDetails}
                   onChange={(e) => setJobDetails(e.target.value)}
@@ -197,7 +197,7 @@ export default function DemoPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-md px-3 py-2 text-sm font-medium border bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-md px-3 py-2 text-sm font-medium border bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 disabled={isLoading}
               >
                 {isLoading ? "Starting..." : "Start chat with AI front desk"}
@@ -282,7 +282,7 @@ export default function DemoPage() {
               <form onSubmit={handleSendMessage} className="flex gap-2">
                 <input
                   type="text"
-                  className="flex-1 border rounded px-3 py-2 text-sm dark:bg-neutral-800 dark:border-neutral-700"
+                  className="flex-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 text-sm"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your message..."
@@ -290,7 +290,7 @@ export default function DemoPage() {
                 />
                 <button
                   type="submit"
-                  className="rounded-md px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-md px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
                   disabled={isLoading || !input.trim()}
                 >
                   Send
