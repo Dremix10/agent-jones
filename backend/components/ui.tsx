@@ -51,7 +51,8 @@ export function ThemeToggle() {
       onClick={toggle}
       className="rounded-2xl px-3 py-1.5 text-sm shadow border
                  bg-white/70 hover:bg-white dark:bg-neutral-800/70 dark:hover:bg-neutral-800
-                 border-neutral-200 dark:border-neutral-700"
+                 border-neutral-200 dark:border-neutral-700
+                 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
       aria-label="Toggle dark mode"
     >
       {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
@@ -85,8 +86,9 @@ export function PrimaryButton({ className, ...props }: React.ButtonHTMLAttribute
     <button
       className={cx(
         "rounded-2xl shadow px-4 py-2 font-medium",
-        "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition",
-        "dark:bg-blue-500 dark:hover:bg-blue-500 dark:active:bg-blue-300",
+        "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800",
+        "dark:bg-blue-500 dark:hover:bg-blue-600 dark:active:bg-blue-700",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
         className
       )}
       {...props}
@@ -122,7 +124,8 @@ export function Header({ title, showThemeToggle = true }: { title?: string; show
             onClick={toggle}
             className="rounded-2xl px-3 py-1.5 text-sm shadow border
                        bg-white/70 hover:bg-white dark:bg-neutral-800/70 dark:hover:bg-neutral-800
-                       border-neutral-200 dark:border-neutral-700"
+                       border-neutral-200 dark:border-neutral-700
+                       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
             aria-label="Toggle dark mode"
           >
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
@@ -148,15 +151,15 @@ export function SiteHeader() {
       </Link>
 
       <div className="flex items-center gap-4">
-        <Link href="/demo" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+        <Link href="/demo" className="text-sm font-medium text-gray-700 hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1 transition-colors">
           Demo
         </Link>
-        <Link href="/owner" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+        <Link href="/owner" className="text-sm font-medium text-gray-700 hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1 transition-colors">
           Owner
         </Link>
         <button
           onClick={toggleDarkMode}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition-colors"
           aria-label="Toggle dark mode"
         >
           <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
