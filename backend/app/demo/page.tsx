@@ -351,9 +351,14 @@ export default function DemoPage() {
       </div>
       <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-center text-zinc-900 dark:text-zinc-100">
-            AI Front Desk - Lead Demo
-          </h1>
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">
+              AI Front Desk - Lead Demo
+            </h1>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 italic">
+              Submit a request and the AI will qualify details and schedule a time.
+            </p>
+          </div>
 
           {!leadId ? (
             <form
@@ -410,24 +415,28 @@ export default function DemoPage() {
                 className="w-full rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 disabled={isLoading}
               >
-                {isLoading ? "Starting..." : "Start chat with AI front desk"}
+                {isLoading ? "Starting..." : "Begin Request →"}
               </button>
             </form>
           ) : (
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-neutral-900 space-y-4">
-              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
-                <p className="font-medium">Chat with AI</p>
-                <button
-                  onClick={() => {
-                    setLeadId(null);
-                    setMessages([]);
-                    setName("");
-                    setPhone("");
-                    setJobDetails("");
-                    setError(null);
-                  }}
-                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                >
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                Customer Conversation
+              </h2>
+              <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-neutral-900 space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                  <p className="font-medium">Chat with AI</p>
+                  <button
+                    onClick={() => {
+                      setLeadId(null);
+                      setMessages([]);
+                      setName("");
+                      setPhone("");
+                      setJobDetails("");
+                      setError(null);
+                    }}
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
                   New conversation
                 </button>
               </div>
@@ -459,7 +468,15 @@ export default function DemoPage() {
                             {formatTime(msg.createdAt)}
                           </div>
                           {msg.from === "ai" && msg.action && msg.action !== "none" && (
-                            <ActionBadge action={msg.action} />
+                            <div className="mt-2 space-y-1">
+                              <ActionBadge action={msg.action} />
+                              <div className="text-xs text-zinc-500 dark:text-zinc-400 italic">
+                                {msg.action === "ask" && "AI is gathering requirements"}
+                                {msg.action === "offer_slots" && "AI found available times"}
+                                {msg.action === "confirm_booking" && "AI is scheduling the job"}
+                                {msg.action === "escalate" && "AI needs owner input"}
+                              </div>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -544,15 +561,16 @@ export default function DemoPage() {
                   Send
                 </button>
               </form>
+            </div>
 
-              {leadStatus === "BOOKED" && leadId && (
-                <Link
-                  href={`/owner?lead=${leadId}`}
-                  className="block w-full text-center mt-3 rounded-md px-4 py-2 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-300 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 transition"
-                >
-                  View in dashboard →
-                </Link>
-              )}
+            {leadStatus === "BOOKED" && leadId && (
+              <Link
+                href={`/owner?lead=${leadId}`}
+                className="block w-full text-center mt-3 rounded-md px-4 py-2 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-300 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 transition"
+              >
+                See Job in Dashboard →
+              </Link>
+            )}
             </div>
           )}
         </div>

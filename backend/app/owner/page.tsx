@@ -148,6 +148,10 @@ export default function OwnerPage() {
       <main className="min-h-screen p-4 sm:p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+          Jobs and Revenue Overview
+        </h2>
+        
         {/* Summary Strip */}
         <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
           <div 
@@ -202,7 +206,7 @@ export default function OwnerPage() {
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Leads</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Recent Leads</h1>
           <Link
             href="/demo"
             className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
