@@ -86,14 +86,14 @@ export default function OwnerPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
   const lastFocusedElement = useRef<HTMLElement | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Filter state from URL
+  // Filter state - multi-status selection
   const [activeStatuses, setActiveStatuses] = useState<StatusFilterSet>(
     new Set<LeadStatus>(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"])
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   
   // Loading and error state
   const [isLoading, setIsLoading] = useState(true);
@@ -118,23 +118,24 @@ export default function OwnerPage() {
     
     if (queryParam) {
       setSearchQuery(queryParam);
-      setDebouncedSearch(queryParam);
+      setDebouncedSearchQuery(queryParam);
     }
   }, [searchParams]);
 
   // Debounce search input (250ms)
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
     
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      updateURLFilters(activeStatuses, searchQuery);
     }, 250);
     
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
   }, [searchQuery]);
@@ -328,7 +329,7 @@ export default function OwnerPage() {
   const leadsDelta = leadsToday - leadsYesterday;
 
   // Update URL when filters change
-  useEffect(() => {
+  const updateURLFilters = useCallback((statuses: StatusFilterSet, query: string) => {
     const params = new URLSearchParams();
     
     // Preserve lead param for drawer
@@ -337,48 +338,56 @@ export default function OwnerPage() {
       params.set("lead", leadParam);
     }
     
-    // Only add status if not all statuses are selected
-    if (activeStatuses.size > 0 && activeStatuses.size < 4) {
-      params.set("status", Array.from(activeStatuses).join(","));
+    // Add status filter (comma-separated if not all selected)
+    const allStatuses: LeadStatus[] = ["NEW", "QUALIFIED", "BOOKED", "ESCALATE"];
+    if (statuses.size > 0 && statuses.size < allStatuses.length) {
+      params.set("status", Array.from(statuses).join(","));
     }
     
-    if (debouncedSearch.trim()) {
-      params.set("q", debouncedSearch.trim());
+    if (query.trim()) {
+      params.set("q", query.trim());
     }
     
     const queryString = params.toString();
-    router.replace(queryString ? `/owner?${queryString}` : "/owner");
-  }, [activeStatuses, debouncedSearch, router, searchParams]);
+    router.replace(queryString ? `?${queryString}` : "/owner");
+  }, [router, searchParams]);
 
   function toggleStatus(status: LeadStatus) {
     setActiveStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(status)) {
-        // Don't allow removing all statuses
-        if (next.size > 1) {
-          next.delete(status);
-        }
+      const newSet = new Set(prev);
+      if (newSet.has(status)) {
+        newSet.delete(status);
       } else {
-        next.add(status);
+        newSet.add(status);
       }
-      return next;
+      updateURLFilters(newSet, searchQuery);
+      return newSet;
     });
   }
 
   function handleSearchChange(query: string) {
     setSearchQuery(query);
+    // Debounce will handle URL update
+  }
+
+  function clearAllFilters() {
+    const allStatuses = new Set<LeadStatus>(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"]);
+    setActiveStatuses(allStatuses);
+    setSearchQuery("");
+    setDebouncedSearchQuery("");
+    updateURLFilters(allStatuses, "");
   }
 
   // Client-side filtering
   const filteredLeads = leads.filter((lead) => {
     // Status filter - only show if status is in active set
-    if (!activeStatuses.has(lead.status)) {
+    if (activeStatuses.size > 0 && !activeStatuses.has(lead.status)) {
       return false;
     }
     
-    // Search filter
-    if (debouncedSearch.trim()) {
-      const query = debouncedSearch.toLowerCase();
+    // Search filter - search in name, phone, service, location/zip
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase();
       const matchesName = lead.name.toLowerCase().includes(query);
       const matchesPhone = lead.phone.toLowerCase().includes(query);
       const matchesService = (lead.serviceRequested || lead.jobDetails || "").toLowerCase().includes(query);
@@ -504,7 +513,7 @@ export default function OwnerPage() {
         {/* Filter Row */}
         <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 mb-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            {/* Status Filter Chips */}
+            {/* Status Filter Chips - Toggle multiple */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                 Status:
@@ -533,8 +542,8 @@ export default function OwnerPage() {
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search name, phone, zip, service..."
-                  aria-label="Search leads"
                   className="w-full px-3 py-1.5 pl-9 text-sm border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  aria-label="Search leads"
                 />
                 <svg
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500"
@@ -550,16 +559,13 @@ export default function OwnerPage() {
           </div>
           
           {/* Active Filter Count */}
-          {(activeStatuses.size < 4 || debouncedSearch.trim()) && (
+          {(activeStatuses.size < 4 || debouncedSearchQuery.trim()) && (
             <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs sm:text-sm">
               <span className="text-zinc-600 dark:text-zinc-400">
                 Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{filteredLeads.length}</span> of <span className="font-semibold">{leads.length}</span> leads
               </span>
               <button
-                onClick={() => {
-                  setActiveStatuses(new Set<LeadStatus>(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"]));
-                  setSearchQuery("");
-                }}
+                onClick={clearAllFilters}
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1 font-medium"
                 aria-label="Clear all filters"
               >
