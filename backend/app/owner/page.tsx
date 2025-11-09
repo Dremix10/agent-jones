@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
@@ -14,6 +14,7 @@ export default function OwnerPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadLeads() {
@@ -64,6 +65,13 @@ export default function OwnerPage() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isDrawerOpen]);
 
+  // Auto-scroll messages to bottom
+  useEffect(() => {
+    if (isDrawerOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [isDrawerOpen, selectedLead?.messages]);
+
   function openDrawer(lead: Lead) {
     setSelectedLead(lead);
     setIsDrawerOpen(true);
@@ -72,6 +80,16 @@ export default function OwnerPage() {
   function closeDrawer() {
     setIsDrawerOpen(false);
     setTimeout(() => setSelectedLead(null), 300);
+  }
+
+  function copyToClipboard(text: string, label: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Copied!",
+        description: `${label} copied to clipboard`,
+        type: "success",
+      });
+    });
   }
 
   function formatTime(isoString: string): string {
@@ -261,9 +279,38 @@ export default function OwnerPage() {
                 <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                   {selectedLead?.name}
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 truncate">
-                  {selectedLead?.phone} {selectedLead?.email && `• ${selectedLead.email}`}
-                </p>
+                <div className="flex flex-wrap gap-2 sm:gap-3 items-center text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  <a 
+                    href={`tel:${selectedLead?.phone}`}
+                    className="hover:text-zinc-900 dark:hover:text-zinc-200 underline"
+                  >
+                    {selectedLead?.phone}
+                  </a>
+                  <button
+                    onClick={() => selectedLead?.phone && copyToClipboard(selectedLead.phone, "Phone")}
+                    className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    title="Copy phone"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  {selectedLead?.email && (
+                    <>
+                      <span>•</span>
+                      <span className="truncate">{selectedLead.email}</span>
+                      <button
+                        onClick={() => selectedLead?.email && copyToClipboard(selectedLead.email, "Email")}
+                        className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        title="Copy email"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 {selectedLead && <StatusPill status={selectedLead.status} />}
@@ -312,6 +359,22 @@ export default function OwnerPage() {
                       </span>
                     </div>
                   )}
+                  <div className="col-span-2" title="Status is set by AI during conversation">
+                    <span className="text-zinc-500 dark:text-zinc-400">Status:</span>
+                    <select
+                      disabled
+                      value={selectedLead?.status}
+                      className="ml-2 px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm cursor-not-allowed opacity-70"
+                    >
+                      <option value="NEW">NEW</option>
+                      <option value="QUALIFIED">QUALIFIED</option>
+                      <option value="BOOKED">BOOKED</option>
+                      <option value="ESCALATE">ESCALATE</option>
+                    </select>
+                    <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 italic">
+                      (Set by AI)
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -362,6 +425,7 @@ export default function OwnerPage() {
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
                 ) : (
                   <div className="text-center py-8 text-zinc-500 dark:text-zinc-400 text-sm">
