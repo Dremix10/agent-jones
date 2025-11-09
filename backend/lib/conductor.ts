@@ -32,7 +32,7 @@ export async function callClaudeForLead(lead: Lead): Promise<ActionContract> {
   try {
     // Call Claude API
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
       system: `${systemPrompt}\n\n## Knowledge Base\n\`\`\`yaml\n${knowledgeBase}\n\`\`\``,
       messages,
