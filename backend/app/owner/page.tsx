@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import type { Lead } from "@/lib/types";
+import type { Lead, LeadStatus } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
 
-type StatusFilter = "All" | "NEW" | "QUALIFIED" | "BOOKED" | "ESCALATE";
+type StatusFilterSet = Set<LeadStatus>;
 
 // Table skeleton loader
 function TableSkeleton() {
@@ -88,8 +88,12 @@ export default function OwnerPage() {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   
   // Filter state from URL
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [activeStatuses, setActiveStatuses] = useState<StatusFilterSet>(
+    new Set<LeadStatus>(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"])
+  );
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Loading and error state
   const [isLoading, setIsLoading] = useState(true);
@@ -103,14 +107,37 @@ export default function OwnerPage() {
     const statusParam = searchParams.get("status");
     const queryParam = searchParams.get("q");
     
-    if (statusParam && ["NEW", "QUALIFIED", "BOOKED", "ESCALATE"].includes(statusParam)) {
-      setStatusFilter(statusParam as StatusFilter);
+    if (statusParam) {
+      const statuses = statusParam.split(",").filter((s): s is LeadStatus => 
+        ["NEW", "QUALIFIED", "BOOKED", "ESCALATE"].includes(s)
+      );
+      if (statuses.length > 0) {
+        setActiveStatuses(new Set(statuses));
+      }
     }
     
     if (queryParam) {
       setSearchQuery(queryParam);
+      setDebouncedSearch(queryParam);
     }
-  }, []);
+  }, [searchParams]);
+
+  // Debounce search input (250ms)
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 250);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     async function loadLeads() {
@@ -301,7 +328,7 @@ export default function OwnerPage() {
   const leadsDelta = leadsToday - leadsYesterday;
 
   // Update URL when filters change
-  function updateFilters(newStatus: StatusFilter, newQuery: string) {
+  useEffect(() => {
     const params = new URLSearchParams();
     
     // Preserve lead param for drawer
@@ -310,43 +337,54 @@ export default function OwnerPage() {
       params.set("lead", leadParam);
     }
     
-    if (newStatus !== "All") {
-      params.set("status", newStatus);
+    // Only add status if not all statuses are selected
+    if (activeStatuses.size > 0 && activeStatuses.size < 4) {
+      params.set("status", Array.from(activeStatuses).join(","));
     }
     
-    if (newQuery.trim()) {
-      params.set("q", newQuery.trim());
+    if (debouncedSearch.trim()) {
+      params.set("q", debouncedSearch.trim());
     }
     
     const queryString = params.toString();
-    router.replace(queryString ? `?${queryString}` : "/owner");
-  }
+    router.replace(queryString ? `/owner?${queryString}` : "/owner");
+  }, [activeStatuses, debouncedSearch, router, searchParams]);
 
-  function handleStatusFilter(status: StatusFilter) {
-    setStatusFilter(status);
-    updateFilters(status, searchQuery);
+  function toggleStatus(status: LeadStatus) {
+    setActiveStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        // Don't allow removing all statuses
+        if (next.size > 1) {
+          next.delete(status);
+        }
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
   }
 
   function handleSearchChange(query: string) {
     setSearchQuery(query);
-    updateFilters(statusFilter, query);
   }
 
   // Client-side filtering
   const filteredLeads = leads.filter((lead) => {
-    // Status filter
-    if (statusFilter !== "All" && lead.status !== statusFilter) {
+    // Status filter - only show if status is in active set
+    if (!activeStatuses.has(lead.status)) {
       return false;
     }
     
     // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const query = debouncedSearch.toLowerCase();
       const matchesName = lead.name.toLowerCase().includes(query);
       const matchesPhone = lead.phone.toLowerCase().includes(query);
       const matchesService = (lead.serviceRequested || lead.jobDetails || "").toLowerCase().includes(query);
+      const matchesLocation = (lead.location || "").toLowerCase().includes(query);
       
-      if (!matchesName && !matchesPhone && !matchesService) {
+      if (!matchesName && !matchesPhone && !matchesService && !matchesLocation) {
         return false;
       }
     }
@@ -471,13 +509,13 @@ export default function OwnerPage() {
               <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                 Status:
               </span>
-              {(["All", "NEW", "QUALIFIED", "BOOKED", "ESCALATE"] as StatusFilter[]).map((status) => (
+              {(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"] as LeadStatus[]).map((status) => (
                 <button
                   key={status}
-                  onClick={() => handleStatusFilter(status)}
-                  aria-pressed={statusFilter === status}
+                  onClick={() => toggleStatus(status)}
+                  aria-pressed={activeStatuses.has(status)}
                   className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition whitespace-nowrap ${
-                    statusFilter === status
+                    activeStatuses.has(status)
                       ? "bg-blue-600 text-white"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
@@ -494,7 +532,8 @@ export default function OwnerPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search name, phone, service..."
+                  placeholder="Search name, phone, zip, service..."
+                  aria-label="Search leads"
                   className="w-full px-3 py-1.5 pl-9 text-sm border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 />
                 <svg
@@ -502,6 +541,7 @@ export default function OwnerPage() {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -510,18 +550,18 @@ export default function OwnerPage() {
           </div>
           
           {/* Active Filter Count */}
-          {(statusFilter !== "All" || searchQuery.trim()) && (
+          {(activeStatuses.size < 4 || debouncedSearch.trim()) && (
             <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs sm:text-sm">
               <span className="text-zinc-600 dark:text-zinc-400">
                 Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{filteredLeads.length}</span> of <span className="font-semibold">{leads.length}</span> leads
               </span>
               <button
                 onClick={() => {
-                  setStatusFilter("All");
+                  setActiveStatuses(new Set<LeadStatus>(["NEW", "QUALIFIED", "BOOKED", "ESCALATE"]));
                   setSearchQuery("");
-                  updateFilters("All", "");
                 }}
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1 font-medium"
+                aria-label="Clear all filters"
               >
                 Clear filters
               </button>
