@@ -410,3 +410,78 @@ function parseActionContract(responseText: string, lead: Lead): ActionContract {
     };
   }
 }
+
+/**
+ * Generate a personalized welcome message for a new lead
+ * 
+ * This function creates the first AI message when a customer submits the form.
+ * It uses Claude to generate a friendly, contextual greeting that acknowledges
+ * what the customer wants and asks ONE clear next question.
+ * 
+ * @param lead - The newly created lead with form data
+ * @returns Promise<string> - The welcome message text
+ */
+export async function generateWelcomeMessageForLead(lead: Lead): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+
+  const client = new Anthropic({ apiKey });
+
+  const jobDetails = (lead.jobDetails || '').trim();
+  const name = (lead.name || '').trim();
+
+  const systemPrompt = `
+You are the AI front desk for Houston's Finest Mobile Detailing.
+
+A new customer just submitted the website form. You can see their name and what they say they need done.
+
+Your job is to send the very FIRST message in the conversation. Goals:
+
+- Be friendly, concise, and confident.
+- Acknowledge what they want using natural language (don't just echo the form verbatim).
+- Do NOT ask for their name or phone again.
+- Ask exactly ONE clear next question that moves them closer to booking (e.g., confirm ZIP code, preferred day/time, or vehicle type).
+- Keep the entire reply under 2 short sentences.
+
+Return ONLY the message text. No JSON, no markdown.
+`.trim();
+
+  const userPrompt = `
+New lead details from the form:
+- Name: ${name || 'Unknown'}
+- Job details: ${jobDetails || 'Not specified'}
+- Channel: ${lead.channel || 'web'}
+
+Write the first message you would send to this customer, following the system instructions.
+`.trim();
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 256,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+      temperature: 0.8,
+    });
+
+    const responseText = response.content[0].type === 'text'
+      ? response.content[0].text.trim()
+      : '';
+
+    if (!responseText) {
+      throw new Error('Claude returned empty response for welcome message');
+    }
+
+    return responseText;
+  } catch (error) {
+    console.error('[Welcome] Error calling Claude API:', error);
+    throw error; // Re-throw so the route can handle fallback
+  }
+}
