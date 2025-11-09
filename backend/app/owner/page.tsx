@@ -66,15 +66,63 @@ export default function OwnerPage() {
     });
   }
 
+  // Compute summary metrics from leads
+  const leadsToday = leads.filter((lead) => {
+    const createdDate = new Date(lead.createdAt);
+    const today = new Date();
+    return (
+      createdDate.getFullYear() === today.getFullYear() &&
+      createdDate.getMonth() === today.getMonth() &&
+      createdDate.getDate() === today.getDate()
+    );
+  }).length;
+
+  const bookedRevenue = leads
+    .filter((lead) => lead.status === "BOOKED")
+    .reduce((sum, lead) => sum + (lead.estimatedRevenue || 0), 0);
+
+  const escalations = leads.filter((lead) => lead.status === "ESCALATE").length;
+
   return (
     <div>
       <Header title="Owner Dashboard" showThemeToggle />
-      <main className="min-h-screen p-6">
+      <main className="min-h-screen p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
-        <h1 className="text-2xl font-semibold mb-4">Owner Dashboard - Leads</h1>
-        <div className="border rounded-lg overflow-hidden">
+        
+        {/* Summary Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+              Leads Today
+            </div>
+            <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+              {leadsToday}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+              Booked Revenue
+            </div>
+            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              ${bookedRevenue.toFixed(0)}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+              Escalations
+            </div>
+            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {escalations}
+            </div>
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">Leads</h1>
+        <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-neutral-800">
               <tr>
                 <th className="text-left px-3 py-2">Created</th>
                 <th className="text-left px-3 py-2">Name</th>
