@@ -695,9 +695,17 @@ export default function DemoPage() {
                   ))
                 )}
 
-                {/* AI reply loading indicator */}
+                {/* AI reply loading indicator - typing bubble */}
                 {isLoading && messages.length > 0 && (
-                  <ChatBubbleSkeleton />
+                  <div className="flex justify-start">
+                    <div className="bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-4 py-3 shadow-sm">
+                      <div className="flex gap-1.5 items-center">
+                        <div className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-zinc-400 dark:bg-zinc-500 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 <div ref={messagesEndRef} />
