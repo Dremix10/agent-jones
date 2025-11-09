@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
@@ -9,13 +9,34 @@ import StatusPill from "@/components/StatusPill";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
 
+type StatusFilter = "All" | "NEW" | "QUALIFIED" | "BOOKED" | "ESCALATE";
+
 export default function OwnerPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Filter state from URL
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Initialize filters from URL
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    const queryParam = searchParams.get("q");
+    
+    if (statusParam && ["NEW", "QUALIFIED", "BOOKED", "ESCALATE"].includes(statusParam)) {
+      setStatusFilter(statusParam as StatusFilter);
+    }
+    
+    if (queryParam) {
+      setSearchQuery(queryParam);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadLeads() {
@@ -137,6 +158,60 @@ export default function OwnerPage() {
 
   const leadsDelta = leadsToday - leadsYesterday;
 
+  // Update URL when filters change
+  function updateFilters(newStatus: StatusFilter, newQuery: string) {
+    const params = new URLSearchParams();
+    
+    // Preserve lead param for drawer
+    const leadParam = searchParams.get("lead");
+    if (leadParam) {
+      params.set("lead", leadParam);
+    }
+    
+    if (newStatus !== "All") {
+      params.set("status", newStatus);
+    }
+    
+    if (newQuery.trim()) {
+      params.set("q", newQuery.trim());
+    }
+    
+    const queryString = params.toString();
+    router.replace(queryString ? `?${queryString}` : "/owner");
+  }
+
+  function handleStatusFilter(status: StatusFilter) {
+    setStatusFilter(status);
+    updateFilters(status, searchQuery);
+  }
+
+  function handleSearchChange(query: string) {
+    setSearchQuery(query);
+    updateFilters(statusFilter, query);
+  }
+
+  // Client-side filtering
+  const filteredLeads = leads.filter((lead) => {
+    // Status filter
+    if (statusFilter !== "All" && lead.status !== statusFilter) {
+      return false;
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesName = lead.name.toLowerCase().includes(query);
+      const matchesPhone = lead.phone.toLowerCase().includes(query);
+      const matchesService = (lead.serviceRequested || lead.jobDetails || "").toLowerCase().includes(query);
+      
+      if (!matchesName && !matchesPhone && !matchesService) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
   return (
     <div>
       <Header title="Owner Dashboard" showThemeToggle />
@@ -215,12 +290,69 @@ export default function OwnerPage() {
           </Link>
         </div>
 
-        <div className="mb-3 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <span className="font-medium">Statuses:</span>
-          <StatusPill status="NEW" />
-          <StatusPill status="QUALIFIED" />
-          <StatusPill status="BOOKED" />
-          <StatusPill status="ESCALATE" />
+        {/* Filter Row */}
+        <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            {/* Status Filter Chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                Status:
+              </span>
+              {(["All", "NEW", "QUALIFIED", "BOOKED", "ESCALATE"] as StatusFilter[]).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusFilter(status)}
+                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition whitespace-nowrap ${
+                    statusFilter === status
+                      ? "bg-blue-600 text-white"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+            
+            {/* Search Box */}
+            <div className="flex-1 sm:max-w-xs">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search name, phone, service..."
+                  className="w-full px-3 py-1.5 pl-9 text-sm border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                />
+                <svg
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          {/* Active Filter Count */}
+          {(statusFilter !== "All" || searchQuery.trim()) && (
+            <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs sm:text-sm">
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{filteredLeads.length}</span> of <span className="font-semibold">{leads.length}</span> leads
+              </span>
+              <button
+                onClick={() => {
+                  setStatusFilter("All");
+                  setSearchQuery("");
+                  updateFilters("All", "");
+                }}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm overflow-x-auto">
@@ -236,7 +368,7 @@ export default function OwnerPage() {
               </tr>
             </thead>
             <tbody>
-              {leads.map((lead) => (
+              {filteredLeads.map((lead) => (
                 <tr
                   key={lead.id}
                   onClick={() => openDrawer(lead)}
@@ -264,6 +396,21 @@ export default function OwnerPage() {
                   </td>
                 </tr>
               ))}
+              {filteredLeads.length === 0 && leads.length > 0 && (
+                <tr>
+                  <td className="px-3 py-12 text-center text-zinc-500 dark:text-zinc-400" colSpan={6}>
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-12 h-12 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-base font-semibold text-zinc-900 dark:text-zinc-100">No matching leads</p>
+                        <p className="text-sm mt-1">Try adjusting your filters</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {leads.length === 0 && (
                 <tr>
                   <td className="px-3 py-12 text-center text-zinc-500 dark:text-zinc-400" colSpan={6}>
