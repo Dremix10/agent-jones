@@ -201,7 +201,24 @@ export default function OwnerPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">Leads</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Leads</h1>
+          <Link
+            href="/demo"
+            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+          >
+            ← Back to Demo
+          </Link>
+        </div>
+
+        <div className="mb-3 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <span className="font-medium">Statuses:</span>
+          <StatusPill status="NEW" />
+          <StatusPill status="QUALIFIED" />
+          <StatusPill status="BOOKED" />
+          <StatusPill status="ESCALATE" />
+        </div>
+
         <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-neutral-800">
@@ -438,6 +455,16 @@ export default function OwnerPage() {
                     No messages yet.
                   </div>
                 )}
+              </div>
+
+              {/* Drawer footer */}
+              <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-3 flex justify-end">
+                <button
+                  onClick={closeDrawer}
+                  className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
