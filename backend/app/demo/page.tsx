@@ -177,7 +177,7 @@ export default function DemoPage() {
   return (
     <div>
       <Header title="Customer Demo" showThemeToggle />
-      <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 flex flex-col items-center justify-center p-6">
+      <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-2xl font-semibold text-center">
             AI Front Desk - Lead Demo

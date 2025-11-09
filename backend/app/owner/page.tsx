@@ -86,50 +86,50 @@ export default function OwnerPage() {
   return (
     <div>
       <Header title="Owner Dashboard" showThemeToggle />
-      <main className="min-h-screen p-6 bg-gray-50 dark:bg-zinc-950">
+      <main className="min-h-screen p-4 sm:p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         
         {/* Summary Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Leads Today
             </div>
-            <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            <div className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               {leadsToday}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Booked Revenue
             </div>
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+            <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
               ${bookedRevenue.toFixed(0)}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 shadow-sm">
-            <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
+            <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Escalations
             </div>
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
               {escalations}
             </div>
           </div>
         </div>
 
         <h1 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">Leads</h1>
-        <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-neutral-800">
               <tr>
-                <th className="text-left px-3 py-2">Created</th>
-                <th className="text-left px-3 py-2">Name</th>
-                <th className="text-left px-3 py-2">Phone</th>
-                <th className="text-left px-3 py-2">Service</th>
-                <th className="text-left px-3 py-2">Status</th>
-                <th className="text-left px-3 py-2">Est. Revenue</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Created</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Name</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Phone</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Service</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Status</th>
+                <th className="text-left px-3 py-2 whitespace-nowrap">Est. Revenue</th>
               </tr>
             </thead>
             <tbody>
@@ -137,28 +137,43 @@ export default function OwnerPage() {
                 <tr
                   key={lead.id}
                   onClick={() => openDrawer(lead)}
-                  className="border-t hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition"
+                  className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition"
                 >
-                  <td className="px-3 py-2">
-                    {new Date(lead.createdAt).toLocaleString()}
+                  <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+                    {new Date(lead.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-3 py-2">{lead.name}</td>
-                  <td className="px-3 py-2">{lead.phone}</td>
-                  <td className="px-3 py-2">{lead.serviceRequested ?? "-"}</td>
+                  <td className="px-3 py-2 max-w-[150px]" title={lead.name}>
+                    <div className="truncate text-zinc-900 dark:text-zinc-100">{lead.name}</div>
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{lead.phone}</td>
+                  <td className="px-3 py-2 max-w-[200px]" title={lead.serviceRequested || lead.jobDetails || ""}>
+                    <div className="truncate text-zinc-700 dark:text-zinc-300">
+                      {lead.serviceRequested || lead.jobDetails || "—"}
+                    </div>
+                  </td>
                   <td className="px-3 py-2">
                     <StatusPill status={lead.status} />
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 whitespace-nowrap text-zinc-900 dark:text-zinc-100 font-medium">
                     {lead.estimatedRevenue
                       ? `$${lead.estimatedRevenue.toFixed(0)}`
-                      : "-"}
+                      : "—"}
                   </td>
                 </tr>
               ))}
               {leads.length === 0 && (
                 <tr>
-                  <td className="px-3 py-4 text-center text-gray-500" colSpan={6}>
-                    No leads yet. Create one from the /demo page.
+                  <td className="px-3 py-12 text-center text-zinc-500 dark:text-zinc-400" colSpan={6}>
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-lg font-medium">No leads yet</p>
+                      <p className="text-sm">Create your first lead from the demo page</p>
+                      <a
+                        href="/demo"
+                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                      >
+                        Go to Demo →
+                      </a>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -177,21 +192,21 @@ export default function OwnerPage() {
           />
           
           {/* Drawer */}
-          <div className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-white dark:bg-neutral-900 shadow-2xl z-50 overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-neutral-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="fixed right-0 top-0 bottom-0 w-full sm:max-w-2xl bg-white dark:bg-neutral-900 shadow-2xl z-50 overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-neutral-900 border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4 flex items-center justify-between">
+              <div className="flex-1 min-w-0 pr-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                   {selectedLead?.name}
                 </h2>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 truncate">
                   {selectedLead?.phone} {selectedLead?.email && `• ${selectedLead.email}`}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 {selectedLead && <StatusPill status={selectedLead.status} />}
                 <button
                   onClick={closeDrawer}
-                  className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label="Close"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,13 +216,13 @@ export default function OwnerPage() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6">
               {/* Lead Details */}
               <div>
                 <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
                   Lead Information
                 </h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-zinc-500 dark:text-zinc-400">Created:</span>
                     <span className="ml-2 text-zinc-900 dark:text-zinc-100">
