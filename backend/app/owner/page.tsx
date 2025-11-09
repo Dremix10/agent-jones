@@ -67,6 +67,7 @@ export default function OwnerPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState<"today" | "all">("today");
   
   // Loading and error state
   const [isLoading, setIsLoading] = useState(true);
@@ -284,7 +285,7 @@ export default function OwnerPage() {
     });
   }
 
-  // Compute summary metrics from leads
+  // Compute summary metrics from leads based on date range
   const today = new Date();
   const todayStr = today.toDateString();
   
@@ -292,21 +293,26 @@ export default function OwnerPage() {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toDateString();
 
-  const leadsToday = leads.filter((lead) => {
-    const createdDate = new Date(lead.createdAt);
-    return createdDate.toDateString() === todayStr;
-  }).length;
+  // Filter leads by date range first
+  const rangeFilteredLeads = dateRange === "today" 
+    ? leads.filter((lead) => {
+        const createdDate = new Date(lead.createdAt);
+        return createdDate.toDateString() === todayStr;
+      })
+    : leads;
+
+  const leadsToday = rangeFilteredLeads.length;
 
   const leadsYesterday = leads.filter((lead) => {
     const createdDate = new Date(lead.createdAt);
     return createdDate.toDateString() === yesterdayStr;
   }).length;
 
-  const bookedRevenue = leads
+  const bookedRevenue = rangeFilteredLeads
     .filter((lead) => lead.status === "BOOKED")
     .reduce((sum, lead) => sum + (lead.estimatedRevenue || 0), 0);
 
-  const escalations = leads.filter((lead) => lead.status === "ESCALATE").length;
+  const escalations = rangeFilteredLeads.filter((lead) => lead.status === "ESCALATE").length;
 
   const leadsDelta = leadsToday - leadsYesterday;
 
@@ -357,11 +363,20 @@ export default function OwnerPage() {
     setActiveStatuses(allStatuses);
     setSearchQuery("");
     setDebouncedSearchQuery("");
+    setDateRange("today");
     updateURLFilters(allStatuses, "");
   }
 
   // Client-side filtering
   const filteredLeads = leads.filter((lead) => {
+    // Date range filter
+    if (dateRange === "today") {
+      const createdDate = new Date(lead.createdAt);
+      if (createdDate.toDateString() !== todayStr) {
+        return false;
+      }
+    }
+    
     // Status filter - only show if status is in active set
     if (activeStatuses.size > 0 && !activeStatuses.has(lead.status)) {
       return false;
@@ -434,11 +449,11 @@ export default function OwnerPage() {
         <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
           <div 
             className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
-            aria-label={`Leads today: ${leadsToday}${leadsDelta !== 0 ? `, ${leadsDelta > 0 ? 'up' : 'down'} ${Math.abs(leadsDelta)} from yesterday` : ''}`}
+            aria-label={`Leads ${dateRange === "today" ? "today" : "all time"}: ${leadsToday}${dateRange === "today" && leadsDelta !== 0 ? `, ${leadsDelta > 0 ? 'up' : 'down'} ${Math.abs(leadsDelta)} from yesterday` : ''}`}
           >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1 flex items-center justify-between">
-              <span>Leads Today</span>
-              {leadsDelta !== 0 && (
+              <span>Leads {dateRange === "today" ? "Today" : "All Time"}</span>
+              {dateRange === "today" && leadsDelta !== 0 && (
                 <span className={`text-xs px-2 py-0.5 rounded-full ${leadsDelta > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
                   {leadsDelta > 0 ? '+' : ''}{leadsDelta} vs yesterday
                 </span>
@@ -448,13 +463,13 @@ export default function OwnerPage() {
               <CountUp value={leadsToday} />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-              today
+              {dateRange === "today" ? "today" : "all time"}
             </div>
           </div>
 
           <div 
             className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
-            aria-label={`Booked revenue: $${bookedRevenue.toFixed(0)} lifetime`}
+            aria-label={`Booked revenue: $${bookedRevenue.toFixed(0)} ${dateRange === "today" ? "today" : "lifetime"}`}
           >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Booked Revenue
@@ -463,7 +478,7 @@ export default function OwnerPage() {
               <CountUp value={bookedRevenue} prefix="$" />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-              lifetime
+              {dateRange === "today" ? "today" : "lifetime"}
             </div>
           </div>
 
@@ -478,7 +493,7 @@ export default function OwnerPage() {
               <CountUp value={escalations} />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
-              needs attention
+              {dateRange === "today" ? "today" : "all time"}
             </div>
           </div>
         </div>
@@ -501,6 +516,37 @@ export default function OwnerPage() {
         {/* Filter Row */}
         <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 mb-4 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            {/* Date Range Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                Range:
+              </span>
+              <div className="inline-flex rounded-lg border border-zinc-300 dark:border-zinc-700 overflow-hidden">
+                <button
+                  onClick={() => setDateRange("today")}
+                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                    dateRange === "today"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  }`}
+                  aria-pressed={dateRange === "today"}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setDateRange("all")}
+                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium transition whitespace-nowrap border-l border-zinc-300 dark:border-zinc-700 ${
+                    dateRange === "all"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  }`}
+                  aria-pressed={dateRange === "all"}
+                >
+                  All
+                </button>
+              </div>
+            </div>
+
             {/* Status Filter Chips - Toggle multiple */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
@@ -547,7 +593,7 @@ export default function OwnerPage() {
           </div>
           
           {/* Active Filter Count */}
-          {(activeStatuses.size < 4 || debouncedSearchQuery.trim()) && (
+          {(activeStatuses.size < 4 || debouncedSearchQuery.trim() || dateRange === "all") && (
             <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs sm:text-sm">
               <span className="text-zinc-600 dark:text-zinc-400">
                 Showing <span className="font-semibold text-zinc-900 dark:text-zinc-100">{filteredLeads.length}</span> of <span className="font-semibold">{leads.length}</span> leads
