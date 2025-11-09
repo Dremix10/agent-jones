@@ -52,8 +52,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
   } catch (error) {
     console.error("[Messages API] Error processing message:", error);
+    console.error("[Messages API] Stack trace:", error instanceof Error ? error.stack : "No stack trace");
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
