@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { Lead } from "@/lib/types";
-import { Header, SiteHeader, ModeBanner } from "@/components/ui";
+import { Header, ModeBanner } from "@/components/ui";
+import StatusPill from "@/components/StatusPill";
 
 const USE_MOCK = true;
 
@@ -51,7 +52,9 @@ export default function OwnerPage() {
                   <td className="px-3 py-2">{lead.name}</td>
                   <td className="px-3 py-2">{lead.phone}</td>
                   <td className="px-3 py-2">{lead.serviceRequested ?? "-"}</td>
-                  <td className="px-3 py-2">{lead.status}</td>
+                  <td className="px-3 py-2">
+                    <StatusPill status={lead.status} />
+                  </td>
                   <td className="px-3 py-2">
                     {lead.estimatedRevenue
                       ? `${lead.estimatedRevenue.toFixed(0)}`
