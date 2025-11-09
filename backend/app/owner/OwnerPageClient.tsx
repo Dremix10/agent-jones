@@ -568,59 +568,107 @@ export default function OwnerPageClient() {
                 )}
               </div>
 
-              {/* AI Follow-up Coach - Only show for ESCALATE status */}
-              {selectedLead?.status === "ESCALATE" && (
-                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-1">
-                      🤖 AI Follow-up Coach
-                    </h3>
-                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
-                      Draft a text you can send to this customer.
-                    </p>
-                    
-                    <button
-                      onClick={handleOwnerAssistClick}
-                      disabled={ownerAssistLoading}
-                      className="w-full px-4 py-2 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {ownerAssistLoading ? "Drafting…" : "Draft follow-up message"}
-                    </button>
-
-                    {ownerAssistError && (
-                      <div className="mt-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
-                        {ownerAssistError}
-                      </div>
-                    )}
-
-                    {ownerAssistText && (
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-amber-800 dark:text-amber-300">
-                            Suggested message:
-                          </span>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(ownerAssistText);
-                              toast({
-                                title: "Copied!",
-                                description: "Message copied to clipboard",
-                                type: "success",
-                              });
-                            }}
-                            className="text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition"
-                          >
-                            Copy
-                          </button>
+              {/* AI Follow-up Coach */}
+              <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                <div className={`rounded-lg p-5 ${
+                  selectedLead?.status === "ESCALATE"
+                    ? "bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700"
+                    : "bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800"
+                }`}>
+                  <h3 className={`text-base font-semibold mb-2 flex items-center gap-2 ${
+                    selectedLead?.status === "ESCALATE"
+                      ? "text-amber-900 dark:text-amber-300"
+                      : "text-neutral-500 dark:text-neutral-400"
+                  }`}>
+                    <span>🤖</span>
+                    <span>AI Follow-up Coach</span>
+                  </h3>
+                  
+                  {selectedLead?.status === "ESCALATE" ? (
+                    <>
+                      {!ownerAssistText && !ownerAssistLoading && (
+                        <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">
+                          This lead is escalated. Click the button below to have AI draft a follow-up SMS or email you can send to the customer.
+                        </p>
+                      )}
+                      
+                      {ownerAssistLoading && (
+                        <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 mb-4">
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Drafting follow-up message…</span>
                         </div>
-                        <div className="rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-zinc-900 p-3 text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
-                          {ownerAssistText}
+                      )}
+
+                      {ownerAssistText && (
+                        <div className="space-y-3">
+                          <p className="text-sm text-amber-700 dark:text-amber-400">
+                            Suggested message (edit before sending):
+                          </p>
+                          <textarea
+                            readOnly
+                            value={ownerAssistText}
+                            className="w-full h-32 px-3 py-2 text-sm rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-600"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(ownerAssistText);
+                                toast({
+                                  title: "Copied!",
+                                  description: "Message copied to clipboard",
+                                  type: "success",
+                                });
+                              }}
+                              className="flex-1 px-4 py-2 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 dark:hover:bg-amber-500 transition"
+                            >
+                              Copy SMS
+                            </button>
+                            <button
+                              onClick={handleOwnerAssistClick}
+                              disabled={ownerAssistLoading}
+                              className="flex-1 px-4 py-2 text-sm font-medium rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            >
+                              {ownerAssistLoading ? "Drafting…" : "Regenerate"}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+
+                      {!ownerAssistText && !ownerAssistLoading && (
+                        <button
+                          onClick={handleOwnerAssistClick}
+                          disabled={ownerAssistLoading}
+                          className="w-full px-4 py-2.5 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                        >
+                          Draft follow-up message
+                        </button>
+                      )}
+
+                      {ownerAssistError && (
+                        <div className="mt-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                          We couldn&apos;t generate a suggestion right now. Try again in a moment.
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Follow-up coach is available for ESCALATE leads (pricing issues, edge locations, angry customers).
+                      </p>
+                      <button
+                        disabled
+                        className="w-full px-4 py-2.5 text-sm font-medium rounded-md bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed"
+                        title="Only available for escalated leads"
+                      >
+                        Draft follow-up message
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </>
