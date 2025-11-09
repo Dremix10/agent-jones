@@ -116,7 +116,6 @@ export default function OwnerPage() {
     
     debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-      updateURLFilters(activeStatuses, searchQuery);
     }, 250);
     
     return () => {
@@ -322,8 +321,8 @@ export default function OwnerPage() {
   // Count total escalated leads (regardless of date range) for banner
   const totalEscalations = leads.filter((lead) => lead.status === "ESCALATE").length;
 
-  // Update URL when filters change
-  const updateURLFilters = useCallback((statuses: StatusFilterSet, query: string) => {
+  // Sync filters to URL - runs after state updates
+  useEffect(() => {
     const params = new URLSearchParams();
     
     // Preserve lead param for drawer
@@ -334,17 +333,22 @@ export default function OwnerPage() {
     
     // Add status filter (comma-separated if not all selected)
     const allStatuses: LeadStatus[] = ["NEW", "QUALIFIED", "BOOKED", "ESCALATE"];
-    if (statuses.size > 0 && statuses.size < allStatuses.length) {
-      params.set("status", Array.from(statuses).join(","));
+    if (activeStatuses.size > 0 && activeStatuses.size < allStatuses.length) {
+      params.set("status", Array.from(activeStatuses).join(","));
     }
     
-    if (query.trim()) {
-      params.set("q", query.trim());
+    if (debouncedSearchQuery.trim()) {
+      params.set("q", debouncedSearchQuery.trim());
+    }
+    
+    // Add date range if not default
+    if (dateRange !== "today") {
+      params.set("range", dateRange);
     }
     
     const queryString = params.toString();
-    router.replace(queryString ? `?${queryString}` : "/owner");
-  }, [router, searchParams]);
+    router.replace(queryString ? `/owner?${queryString}` : "/owner", { scroll: false });
+  }, [activeStatuses, debouncedSearchQuery, dateRange, router, searchParams]);
 
   function toggleStatus(status: LeadStatus) {
     setActiveStatuses((prev) => {
@@ -354,7 +358,6 @@ export default function OwnerPage() {
       } else {
         newSet.add(status);
       }
-      updateURLFilters(newSet, searchQuery);
       return newSet;
     });
   }
@@ -370,7 +373,6 @@ export default function OwnerPage() {
     setSearchQuery("");
     setDebouncedSearchQuery("");
     setDateRange("today");
-    updateURLFilters(allStatuses, "");
   }
 
   function exportToCSV() {
@@ -441,7 +443,6 @@ export default function OwnerPage() {
     setDateRange("all"); // Show all escalations regardless of date
     setSearchQuery("");
     setDebouncedSearchQuery("");
-    updateURLFilters(new Set<LeadStatus>(["ESCALATE"]), "");
     setShowEscalationBanner(false);
   }
 
