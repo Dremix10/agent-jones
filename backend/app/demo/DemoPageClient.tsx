@@ -142,10 +142,8 @@ export default function DemoPageClient() {
 
           if (!welcomeRes.ok) {
             console.error("Failed to fetch welcome message", await welcomeRes.text());
-            // Fallback: create the static greeting on the client
-            const fallbackBody = jobDetails.trim()
-              ? `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I see you're interested in: "${jobDetails.trim()}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
-              : `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. You can ask about pricing, availability this week, or help booking a full detail.`;
+            // Fallback: create a simple non-echoing greeting
+            const fallbackBody = `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I can help with pricing and availability — what area are you in and when do you need this done?`;
             
             const fallbackMsg: LeadMessageShape = {
               id: "welcome-fallback",
@@ -177,10 +175,8 @@ export default function DemoPageClient() {
           }
         } catch (err) {
           console.error("Error generating welcome message", err);
-          // Same fallback as above
-          const fallbackBody = jobDetails.trim()
-            ? `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I see you're interested in: "${jobDetails.trim()}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
-            : `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. You can ask about pricing, availability this week, or help booking a full detail.`;
+          // Simple non-echoing fallback
+          const fallbackBody = `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I can help with pricing and availability — what area are you in and when do you need this done?`;
           
           const fallbackMsg: LeadMessageShape = {
             id: "welcome-fallback",
