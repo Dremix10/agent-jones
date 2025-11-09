@@ -473,7 +473,7 @@ export default function DemoPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-transparent">
       <Header title="Customer Demo" showThemeToggle />
       {USE_MOCK && (
         <div className="fixed top-4 right-4 z-50 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-medium border border-amber-300 dark:border-amber-700">
@@ -774,3 +774,4 @@ export default function DemoPage() {
     </div>
   );
 }
+
