@@ -7,18 +7,70 @@ import { ModeBanner } from "@/components/ui";
 
 const USE_MOCK = true;
 
+// localStorage helpers for cross-page persistence
+const LOCAL_LEADS_KEY = "agentJonesLeads";
+
+function loadLocalLeads(): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOCAL_LEADS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function OwnerPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
 
   useEffect(() => {
     async function loadLeads() {
       try {
-        const res = await fetch("/api/leads");
-        if (!res.ok) return;
-        const data = await res.json();
-        setLeads(data.leads ?? []);
-      } catch (err) {
-        console.error(err);
+        // Try to fetch from server
+        let serverLeads: any[] = [];
+        try {
+          const res = await fetch("/api/leads", { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json();
+            serverLeads = Array.isArray(data.leads) ? data.leads : [];
+          } else {
+            console.error("Failed to fetch server leads", res.status);
+          }
+        } catch (err) {
+          console.error("Error fetching server leads", err);
+        }
+
+        // Load from localStorage
+        let localLeads: any[] = [];
+        if (typeof window !== "undefined") {
+          localLeads = loadLocalLeads();
+        }
+
+        // Merge by id, prefer local version if present (has latest data)
+        const byId = new Map<string, any>();
+        for (const lead of serverLeads) {
+          if (lead && lead.id) {
+            byId.set(lead.id, lead);
+          }
+        }
+        for (const lead of localLeads) {
+          if (lead && lead.id) {
+            byId.set(lead.id, lead); // local overrides server
+          }
+        }
+
+        // Sort by creation time, newest first
+        const merged = Array.from(byId.values()).sort((a, b) => {
+          const aTime = new Date(a.createdAt ?? 0).getTime();
+          const bTime = new Date(b.createdAt ?? 0).getTime();
+          return bTime - aTime;
+        });
+
+        setLeads(merged);
+      } catch (error) {
+        console.error("Error loading leads", error);
       }
     }
 
