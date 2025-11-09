@@ -599,3 +599,98 @@ Write a concise daily summary following the system instructions.
     throw error; // Re-throw so the route can handle fallback
   }
 }
+
+/**
+ * Generate an AI-written follow-up suggestion for an escalated lead
+ * 
+ * This function helps the shop owner handle escalated situations by providing
+ * a friendly, human follow-up message or phone script they can use.
+ * 
+ * @param lead - The escalated lead with conversation history
+ * @returns Promise<string> - Follow-up message suggestion
+ */
+export async function generateOwnerFollowupForEscalatedLead(lead: Lead): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+
+  const client = new Anthropic({ apiKey });
+
+  const firstName = (lead.name || 'there').split(' ')[0];
+  const serviceInfo = lead.serviceRequested || lead.jobDetails || 'car detailing';
+  const locationInfo = lead.location || 'your area';
+
+  // Build a simple transcript of recent messages (last 8)
+  const recentMessages = (lead.messages || []).slice(-8);
+  const transcript = recentMessages.length > 0
+    ? recentMessages
+        .map((msg) => {
+          const speaker = msg.from === 'user' ? 'customer' : 'ai';
+          return `${speaker}: ${msg.body}`;
+        })
+        .join('\n')
+    : '(No conversation yet)';
+
+  const systemPrompt = `
+You are an operations assistant for Houston's Finest Mobile Detailing, a small mobile car detailing business in Houston.
+
+The AI front desk had a conversation with a customer that has been marked ESCALATE. This means the owner should personally follow up. Common reasons: pricing concerns, angry tone, scheduling conflict, out-of-service area, special request, or confusion.
+
+Your job: Write a short, friendly follow-up message that the owner can send via SMS or use as a phone script.
+
+Requirements:
+- Use the customer's first name if available
+- Be warm, empathetic, and human—not robotic
+- Address the main concern you can infer from the conversation
+- End with a clear next step (e.g., "Can I call you at [time]?" or "Does [alternative] work instead?")
+- Keep it under 120 words
+- Return plain text only (no markdown, no JSON, no salutation like "Subject:" or "To:")
+
+The owner will copy-paste this directly, so make it ready to send.
+`.trim();
+
+  const userPrompt = `
+Business: Houston's Finest Mobile Detailing
+Lead info:
+- Customer name: ${lead.name || 'Unknown'}
+- Phone: ${lead.phone || 'Not provided'}
+- Service requested: ${serviceInfo}
+- Location: ${locationInfo}
+- Status: ${lead.status}
+
+Recent conversation:
+${transcript}
+
+Write a follow-up message the owner can send to this customer.
+`.trim();
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 256,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const responseText = response.content[0].type === 'text'
+      ? response.content[0].text.trim()
+      : '';
+
+    if (!responseText) {
+      throw new Error('Claude returned empty response for owner assist');
+    }
+
+    return responseText;
+  } catch (error) {
+    console.error('[OwnerAssist] Claude error:', error);
+    // Return a safe fallback
+    return `Hi ${firstName}, this is the owner from Houston's Finest Mobile Detailing. I saw your conversation with our assistant and wanted to personally follow up. When is a good time to call you today?`;
+  }
+}
