@@ -1,0 +1,25 @@
+services:
+  - name: "Interior & Exterior Car Detail"
+    base_price_range: "$120-180"
+    typical_duration_hours: 3
+  - name: "Basic Wash & Vacuum"
+    base_price_range: "$40-70"
+    typical_duration_hours: 1
+  - name: "Full Ceramic Coating"
+    base_price_range: "$700-1200"
+    typical_duration_hours: 6
+
+service_area:
+  city: "Houston"
+  radius_miles: 25
+  description: "We serve most of the Houston metro area within ~25 miles of downtown."
+
+availability_rules:
+  weekdays:
+    start_hour: 9
+    end_hour: 18
+  saturday:
+    start_hour: 10
+    end_hour: 16
+  sunday:
+    closed: true
