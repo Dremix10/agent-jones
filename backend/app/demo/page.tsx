@@ -404,17 +404,22 @@ export default function DemoPage() {
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                           — Suggested times —
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-2">
                           {msg.slotOptions.map((slot, slotIdx) => (
                             <button
                               key={slot.id}
                               onClick={() => handleSlotClick(slotIdx)}
                               disabled={isLoading}
-                              className="px-3 py-2 text-sm rounded-lg border border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition min-h-[44px]"
+                              className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-full border-2 border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 text-violet-900 dark:text-violet-100 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-400 dark:hover:border-violet-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] group"
                             >
-                              <div className="font-medium">Option {slotIdx + 1}</div>
-                              <div className="text-xs">
-                                {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
+                              <div className="flex flex-col items-start">
+                                <div className="font-semibold">Option {slotIdx + 1}</div>
+                                <div className="text-xs opacity-80">
+                                  {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
+                                </div>
+                              </div>
+                              <div className="text-violet-600 dark:text-violet-400 group-hover:translate-x-1 transition-transform">
+                                →
                               </div>
                             </button>
                           ))}
