@@ -24,6 +24,9 @@ function loadLocalLeads(): any[] {
 
 export default function OwnerPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadLeads() {
@@ -77,6 +80,29 @@ export default function OwnerPage() {
     loadLeads();
   }, []);
 
+  async function handleAskAIForSummary() {
+    setSummaryError(null);
+    setLoadingSummary(true);
+    
+    try {
+      const res = await fetch("/api/leads/owner-summary", { cache: "no-store" });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Failed to fetch AI summary", res.status, errorText);
+        throw new Error("Failed to generate summary. Please try again.");
+      }
+
+      const data = await res.json();
+      setSummary(data.summary);
+    } catch (err) {
+      console.error("Error fetching AI summary:", err);
+      setSummaryError(err instanceof Error ? err.message : "Failed to generate summary");
+    } finally {
+      setLoadingSummary(false);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
@@ -86,6 +112,47 @@ export default function OwnerPage() {
       <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 p-6">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         <h1 className="text-2xl font-semibold mb-4">Owner Dashboard - Leads</h1>
+        
+        {/* AI Daily Summary Section */}
+        <div className="mb-6 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-zinc-50 dark:bg-zinc-900 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Daily Summary</h2>
+            <button
+              onClick={handleAskAIForSummary}
+              disabled={loadingSummary}
+              className="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {loadingSummary ? "Generating..." : "Ask AI for today's summary"}
+            </button>
+          </div>
+
+          {loadingSummary && (
+            <div className="text-sm text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span>Generating summary...</span>
+            </div>
+          )}
+
+          {summaryError && (
+            <div className="text-sm text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+              {summaryError}
+            </div>
+          )}
+
+          {summary && !loadingSummary && (
+            <div className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed p-3 bg-white dark:bg-zinc-950 rounded border border-zinc-200 dark:border-zinc-800">
+              {summary}
+            </div>
+          )}
+
+          {!summary && !loadingSummary && !summaryError && (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 italic">
+              Click the button above to generate an AI summary of today&apos;s activity.
+            </p>
+          )}
+        </div>
+
+        {/* Leads Table */}
         <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-zinc-100 dark:bg-zinc-900 transition-colors">
