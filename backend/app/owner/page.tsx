@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { Lead } from "@/lib/types";
-import { Header, SiteHeader, ModeBanner } from "@/components/ui";
+import ThemeToggle from "@/components/ThemeToggle";
+import { ModeBanner } from "@/components/ui";
 
 const USE_MOCK = true;
 
@@ -26,7 +27,10 @@ export default function OwnerPage() {
 
   return (
     <div>
-      <Header title="Owner Dashboard" showThemeToggle />
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-lg font-semibold">Owner Dashboard</h2>
+        <ThemeToggle />
+      </div>
       <main className="min-h-screen p-6">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         <h1 className="text-2xl font-semibold mb-4">Owner Dashboard - Leads</h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Header } from "@/components/ui";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type LeadMessageShape = {
   id: string;
@@ -108,7 +108,10 @@ export default function DemoPage() {
 
   return (
     <div>
-      <Header title="Customer Demo" showThemeToggle />
+      <div className="flex items-center justify-between p-4 border-b">
+        <h2 className="text-lg font-semibold">Customer Demo</h2>
+        <ThemeToggle />
+      </div>
       <main className="min-h-screen flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-2xl font-semibold text-center">
