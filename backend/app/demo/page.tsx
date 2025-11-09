@@ -56,13 +56,17 @@ function EscalationBanner({
 // Error banner component
 function ErrorBanner({ 
   message, 
-  onRetry 
+  lastUserMessage,
+  onRetry,
+  onCopyMessage
 }: { 
-  message: string; 
-  onRetry: () => void 
+  message: string;
+  lastUserMessage: string | null;
+  onRetry: () => void;
+  onCopyMessage: () => void;
 }) {
   return (
-    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-4 space-y-3">
+    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-4 mb-4 space-y-3 animate-shake">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 dark:bg-yellow-500 flex items-center justify-center">
           <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,19 +75,29 @@ function ErrorBanner({
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-1">
-            Error
+            Having trouble reaching the assistant
           </h3>
           <p className="text-sm text-yellow-800 dark:text-yellow-400">
             {message}
           </p>
         </div>
       </div>
-      <button
-        onClick={onRetry}
-        className="w-full rounded-md px-4 py-2 text-sm font-semibold bg-yellow-600 text-white hover:bg-yellow-700 dark:hover:bg-yellow-500 transition shadow-sm"
-      >
-        Retry
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={onRetry}
+          className="flex-1 rounded-md px-4 py-2 text-sm font-semibold bg-yellow-600 text-white hover:bg-yellow-700 dark:hover:bg-yellow-500 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+        >
+          Retry
+        </button>
+        {lastUserMessage && (
+          <button
+            onClick={onCopyMessage}
+            className="rounded-md px-4 py-2 text-sm font-semibold border-2 border-yellow-600 dark:border-yellow-500 text-yellow-900 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+          >
+            Copy last message
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -120,6 +134,7 @@ export default function DemoPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [hasShownSlotsOnce, setHasShownSlotsOnce] = useState(false);
   const [showSlots, setShowSlots] = useState(true);
   
@@ -210,7 +225,7 @@ export default function DemoPage() {
       if (!res.ok) {
         const errorText = await res.text();
         console.error("POST /api/leads failed:", res.status, errorText);
-        throw new Error("Failed to create lead. Please try again.");
+        throw new Error("Unable to create lead. Please check your connection and try again.");
       }
 
       const data = await res.json();
@@ -232,13 +247,8 @@ export default function DemoPage() {
       }
     } catch (err) {
       console.error("Error in handleSubmit:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to create lead. Please try again.";
+      const errorMessage = err instanceof Error ? err.message : "Unable to create lead. Please try again.";
       setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        type: "error",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -246,6 +256,9 @@ export default function DemoPage() {
 
   async function handleSendMessage(messageText: string) {
     if (!leadId || !messageText.trim() || isLoading) return;
+
+    // Store last message for retry functionality
+    setLastUserMessage(messageText);
 
     const userMessage: LeadMessageShape = {
       id: `temp-${Date.now()}`,
@@ -275,7 +288,7 @@ export default function DemoPage() {
           res.status,
           errorText
         );
-        throw new Error("Can't send a message right now. Please try again.");
+        throw new Error("Unable to send message. Please try again.");
       }
 
       const data = await res.json();
@@ -309,16 +322,16 @@ export default function DemoPage() {
       setError(null);
     } catch (err) {
       console.error("Error in handleSendMessage:", err);
-      const errorMessage = err instanceof Error ? err.message : "Can't send a message right now. Please try again.";
+      const errorMessage = err instanceof Error ? err.message : "Unable to send message. Please try again.";
       setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        type: "error",
-      });
+      
       // Rollback optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
-      setInput(messageText);
+      
+      // Keep input for retry (don't restore if user explicitly cleared it)
+      if (!input) {
+        setInput(messageText);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -352,6 +365,27 @@ export default function DemoPage() {
       description: "The escalation has been sent to the owner",
       type: "success",
     });
+  }
+
+  function handleRetryLastMessage() {
+    if (lastUserMessage) {
+      setError(null);
+      handleSendMessage(lastUserMessage);
+    }
+  }
+
+  function handleCopyLastMessage() {
+    if (lastUserMessage) {
+      navigator.clipboard.writeText(lastUserMessage).then(() => {
+        toast({
+          title: "Copied!",
+          description: "Last message copied to clipboard",
+          type: "success",
+        });
+      }).catch((err) => {
+        console.error("Failed to copy message:", err);
+      });
+    }
   }
 
   function formatTime(isoString: string): string {
@@ -551,18 +585,9 @@ export default function DemoPage() {
               {error && !isLoading && (
                 <ErrorBanner 
                   message={error}
-                  onRetry={() => {
-                    setError(null);
-                    if (leadId) {
-                      // Retry sending last message
-                      if (input.trim()) {
-                        handleSendMessage(input);
-                      }
-                    } else {
-                      // Retry creating lead
-                      handleSubmit(new Event('submit') as any);
-                    }
-                  }}
+                  lastUserMessage={lastUserMessage}
+                  onRetry={handleRetryLastMessage}
+                  onCopyMessage={handleCopyLastMessage}
                 />
               )}
               
