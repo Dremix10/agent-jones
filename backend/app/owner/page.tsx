@@ -8,38 +8,9 @@ import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
+import { TableSkeleton } from "@/components/Skeleton";
 
 type StatusFilterSet = Set<LeadStatus>;
-
-// Table skeleton loader
-function TableSkeleton() {
-  return (
-    <>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <tr key={i} className="border-t border-zinc-200 dark:border-zinc-800">
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-20"></div>
-          </td>
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32"></div>
-          </td>
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
-          </td>
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-40"></div>
-          </td>
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
-          </td>
-          <td className="px-3 py-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
-          </td>
-        </tr>
-      ))}
-    </>
-  );
-}
 
 // Error banner component
 function ErrorBanner({ 

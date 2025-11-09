@@ -7,6 +7,7 @@ import { Header } from "@/components/ui";
 import ActionBadge from "@/components/ActionBadge";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
+import { ChatBubbleSkeleton } from "@/components/Skeleton";
 import type { SlotOption } from "@/lib/types";
 
 type LeadMessageShape = {
@@ -98,22 +99,6 @@ function ErrorBanner({
           </button>
         )}
       </div>
-    </div>
-  );
-}
-
-// Chat skeleton loader
-function ChatSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[80%] rounded-lg px-3 py-2 ${i % 2 === 0 ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-200 dark:bg-neutral-800"}`}>
-            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-48 mb-2"></div>
-            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-20"></div>
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -613,7 +598,11 @@ export default function DemoPage() {
               <div className="space-y-3 max-h-96 overflow-y-auto" aria-live="polite" aria-atomic="false">
                 {/* Show skeleton during initial load */}
                 {isLoading && messages.length === 0 ? (
-                  <ChatSkeleton />
+                  <div className="space-y-3">
+                    <ChatBubbleSkeleton />
+                    <ChatBubbleSkeleton />
+                    <ChatBubbleSkeleton />
+                  </div>
                 ) : (
                   messages.map((msg, idx) => (
                   <div key={msg.id}>
@@ -692,25 +681,9 @@ export default function DemoPage() {
                   ))
                 )}
 
+                {/* AI reply loading indicator */}
                 {isLoading && messages.length > 0 && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-200 dark:bg-neutral-800 rounded-lg px-3 py-2">
-                      <div className="flex space-x-1">
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
+                  <ChatBubbleSkeleton />
                 )}
 
                 <div ref={messagesEndRef} />
