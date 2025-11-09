@@ -50,3 +50,33 @@ export interface ClaudeActionResponse {
   escalate?: boolean;
   updatedLeadFields?: Partial<Lead>;
 }
+
+/**
+ * Action Contract: JSON schema for Conductor → Tool Maker communication
+ * The Conductor AI produces this object, and Tool Maker backend executes it.
+ */
+export type ActionContract = {
+  /** The message to send to the user (always required) */
+  reply: string;
+
+  /** The backend action to perform */
+  action: 'send_message' | 'offer_slots' | 'create_booking' | 'flag_for_review';
+
+  /** Optional parameters for specific actions */
+  parameters?: {
+    // For 'create_booking' action
+    slot?: {
+      datetime: string;        // ISO 8601 format
+      duration?: number;       // Duration in minutes
+    };
+    lead?: {
+      name: string;
+      phone?: string;
+      email?: string;
+      zip?: string;
+    };
+
+    // For 'flag_for_review' action
+    reason?: string;
+  };
+};

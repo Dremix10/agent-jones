@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addMessageToLead, getLead } from "@/lib/leads";
-import { callClaudeForLead } from "@/lib/claudefrontdesk";
+import { callClaudeForLead } from "@/lib/conductor";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
   const body = await req.json();
   const userMessage: string = body.message ?? "";
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 
-  const action = await callClaudeForLead(updatedLead, userMessage);
+  const action = await callClaudeForLead(updatedLead);
 
   const finalLead = addMessageToLead(id, {
     from: "ai",
