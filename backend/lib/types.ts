@@ -79,4 +79,7 @@ export type ActionContract = {
     // For 'flag_for_review' action
     reason?: string;
   };
+
+  /** Updated lead fields to persist (e.g., status, estimatedRevenue, serviceRequested, chosenSlot) */
+  updatedLeadFields?: Partial<Lead>;
 };
