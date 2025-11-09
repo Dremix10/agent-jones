@@ -125,6 +125,26 @@ type ActionContract = {
 
 **Remember:** Your reply and updatedLeadFields must be CONSISTENT. If you say "You're all set for tomorrow at 2pm ($150)", then updatedLeadFields must have status="BOOKED", chosenSlot="Tomorrow at 2pm", estimatedRevenue=150.
 
+## Service Area & Escalations
+
+**CRITICAL: Do not confirm bookings for customers outside our service area!**
+
+- If the ZIP code or location is clearly **outside our normal Houston service area**, or you tell the customer things like:
+  - "a bit outside our main service area"
+  - "outside our service area"
+  - "let me check with our team/manager if we can accommodate you"
+  - "we don't usually go that far"
+  - Any indication you need owner approval for their location
+
+- Then you MUST:
+  1. **Do NOT confirm a booking** (do not say "you're all set" or give a confirmed appointment)
+  2. Set updatedLeadFields.status = "ESCALATE"
+  3. Set action = "none"
+  4. In your reply, tell the customer that the owner/manager will follow up to confirm if we can make an exception
+  5. Optionally ask for their best phone number and preferred times so the owner can reach them
+
+- Only use status: "BOOKED" when you are **confident we can serve the customer** in our area and you are truly confirming an appointment.
+
 ## Booking Confirmation Language
 
 When you are clearly confirming a booking with phrases like:
@@ -138,6 +158,8 @@ You MUST:
 3. Set updatedLeadFields.serviceRequested to the specific service (e.g., "Full Detail", "Exterior Wash", "Interior Detail")
 4. Set updatedLeadFields.estimatedRevenue to a numeric midpoint from the kb.yaml price range
 5. Set updatedLeadFields.chosenSlot to match the time you mentioned
+
+**IMPORTANT:** Never use booking confirmation language ("you're all set...", "your appointment is confirmed") if you just told the customer you might need to check if we can accommodate their location. Those cases should be status: "ESCALATE" instead, as described in the Service Area & Escalations section above.
 
 This ensures the owner dashboard correctly shows bookings and revenue.`;
 
@@ -304,6 +326,23 @@ function buildLeadContext(lead: Lead): string {
 function inferUpdatedLeadFieldsFromReply(lead: Lead, reply: string): Partial<Lead> | null {
   const text = reply.toLowerCase();
   const updates: Partial<Lead> = {};
+
+  // Service-area escalation heuristic: if we talk about being outside service area or
+  // checking with the team/manager, prefer ESCALATE over auto-booking.
+  if (
+    text.includes("outside our main service area") ||
+    text.includes("outside our service area") ||
+    text.includes("outside your main service area") ||
+    text.includes("outside your service area") ||
+    text.includes("we don't usually go that far") ||
+    text.includes("check with our team") ||
+    text.includes("check with my manager") ||
+    text.includes("check with the team") ||
+    text.includes("check with the manager")
+  ) {
+    updates.status = "ESCALATE";
+    return updates;
+  }
 
   // If the assistant is clearly confirming a booking
   if (
