@@ -88,7 +88,27 @@ export default function DemoPage() {
       
       if (data.lead && data.lead.id) {
         setLeadId(data.lead.id);
-        setMessages(data.lead.messages || []);
+        
+        // Create a synthetic AI greeting message (client-side only)
+        // Make it dynamic based on the jobDetails input
+        const trimmedDetails = jobDetails.trim();
+        const hasDetails = trimmedDetails.length > 0;
+
+        const detailsSnippet = hasDetails
+          ? ` I see you're interested in: "${trimmedDetails}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
+          : ` You can ask about pricing, availability this week, or help booking a full detail.`;
+
+        const greetingBody = `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing.${detailsSnippet}`;
+
+        const greetingMessage: LeadMessageShape = {
+          id: "welcome",
+          from: "ai",
+          body: greetingBody,
+          createdAt: new Date().toISOString(),
+        };
+        
+        // Prepend greeting, then append any existing messages from backend
+        setMessages([greetingMessage, ...(data.lead.messages || [])]);
         setError(null);
         // Persist to localStorage for cross-page access
         upsertLocalLead(data.lead);
