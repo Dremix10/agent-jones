@@ -25,18 +25,29 @@ export default function HomePage() {
           </div>
           
           <div className="flex flex-col gap-4 pt-4">
-            <Link
-              href="/demo"
-              className="w-full px-6 py-4 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 text-center"
-            >
-              Start Customer Flow →
-            </Link>
-            <Link
-              href="/owner"
-              className="w-full px-6 py-4 text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 text-center"
-            >
-              Open Owner Dashboard →
-            </Link>
+            <div>
+              <Link
+                href="/demo"
+                className="w-full px-6 py-4 text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 text-center block"
+              >
+                Start Customer Flow →
+              </Link>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
+                Interact with the AI as a customer requesting service
+              </p>
+            </div>
+            
+            <div>
+              <Link
+                href="/owner"
+                className="w-full px-6 py-4 text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 text-center block"
+              >
+                Open Owner Dashboard →
+              </Link>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 text-center">
+                View leads, revenue metrics, and conversation history
+              </p>
+            </div>
           </div>
         </Card>
       </main>
