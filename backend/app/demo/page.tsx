@@ -42,14 +42,25 @@ export default function DemoPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create lead");
+        const errorText = await res.text();
+        console.error("POST /api/leads failed:", res.status, errorText);
+        throw new Error("Failed to create lead. Please try again.");
       }
 
       const data = await res.json();
-      setLeadId(data.lead.id);
-      setMessages(data.lead.messages || []);
+      console.log("Create lead response:", data);
+      
+      if (data.lead && data.lead.id) {
+        setLeadId(data.lead.id);
+        setMessages(data.lead.messages || []);
+        setError(null);
+      } else {
+        console.error("Unexpected response structure:", data);
+        throw new Error("Unexpected response from server");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create lead");
+      console.error("Error in handleSubmit:", err);
+      setError(err instanceof Error ? err.message : "Failed to create lead. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -81,15 +92,32 @@ export default function DemoPage() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to send message");
+        const errorText = await res.text();
+        console.error(
+          `POST /api/leads/${leadId}/messages failed:`,
+          res.status,
+          errorText
+        );
+        throw new Error("Can't send a message right now. Please try again.");
       }
 
       const data = await res.json();
+      console.log("Message API response:", data);
+      
       // Replace with server's source of truth
-      setMessages(data.lead.messages || []);
+      if (data.lead && data.lead.messages) {
+        setMessages(data.lead.messages);
+      } else {
+        console.error("Unexpected response structure:", data);
+        throw new Error("Unexpected response from server");
+      }
+      
+      // Clear error on success
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
-      // Optionally rollback optimistic update
+      console.error("Error in handleSendMessage:", err);
+      setError(err instanceof Error ? err.message : "Can't send a message right now. Please try again.");
+      // Rollback optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
       setInput(currentInput);
     } finally {

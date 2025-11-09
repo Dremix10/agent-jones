@@ -1,7 +1,24 @@
 import { Lead, LeadMessage, LeadStatus } from "./types";
 import { randomUUID } from "crypto";
 
-const leads = new Map<string, Lead>();
+/**
+ * Get the leads store from global scope to survive hot module reloads in dev.
+ * In development, Next.js hot reloads modules when files change, which would
+ * normally reset the in-memory Map. By storing it on globalThis, we preserve
+ * the leads across module reloads as long as the dev server process is alive.
+ */
+const getLeadsStore = (): Map<string, Lead> => {
+  const g = globalThis as any;
+  if (!g.__agentJonesLeadsStore) {
+    g.__agentJonesLeadsStore = new Map<string, Lead>();
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[Leads Store] Initialized new global leads store");
+    }
+  }
+  return g.__agentJonesLeadsStore as Map<string, Lead>;
+};
+
+const leads = getLeadsStore();
 
 export function createLead(input: {
   name: string;
