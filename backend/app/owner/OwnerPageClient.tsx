@@ -33,6 +33,9 @@ export default function OwnerPageClient() {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [ownerAssistLoading, setOwnerAssistLoading] = useState(false);
+  const [ownerAssistText, setOwnerAssistText] = useState<string | null>(null);
+  const [ownerAssistError, setOwnerAssistError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,11 +97,21 @@ export default function OwnerPageClient() {
   function openDrawer(lead: Lead) {
     setSelectedLead(lead);
     setIsDrawerOpen(true);
+    // Reset owner assist state when opening drawer
+    setOwnerAssistText(null);
+    setOwnerAssistError(null);
+    setOwnerAssistLoading(false);
   }
 
   function closeDrawer() {
     setIsDrawerOpen(false);
-    setTimeout(() => setSelectedLead(null), 300);
+    setTimeout(() => {
+      setSelectedLead(null);
+      // Reset owner assist state when closing drawer
+      setOwnerAssistText(null);
+      setOwnerAssistError(null);
+      setOwnerAssistLoading(false);
+    }, 300);
   }
 
   function copyToClipboard(text: string, label: string) {
@@ -175,6 +188,47 @@ export default function OwnerPageClient() {
       setSummaryError(err instanceof Error ? err.message : "Failed to generate summary");
     } finally {
       setLoadingSummary(false);
+    }
+  }
+
+  async function handleOwnerAssistClick() {
+    if (!selectedLead) return;
+    
+    setOwnerAssistLoading(true);
+    setOwnerAssistError(null);
+    setOwnerAssistText(null);
+
+    try {
+      const res = await fetch(`/api/leads/${selectedLead.id}/owner-assist`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Owner assist failed:", res.status, errorText);
+        throw new Error("Failed to generate suggestion");
+      }
+
+      const data = await res.json();
+      setOwnerAssistText(data.suggestion ?? "");
+      
+      toast({
+        title: "Follow-up drafted!",
+        description: "Your personalized message is ready",
+        type: "success",
+      });
+    } catch (err) {
+      console.error("Owner assist error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate suggestion. Please try again.";
+      setOwnerAssistError(errorMessage);
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        type: "error",
+      });
+    } finally {
+      setOwnerAssistLoading(false);
     }
   }
 
@@ -513,6 +567,60 @@ export default function OwnerPageClient() {
                   </div>
                 )}
               </div>
+
+              {/* AI Follow-up Coach - Only show for ESCALATE status */}
+              {selectedLead?.status === "ESCALATE" && (
+                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-1">
+                      🤖 AI Follow-up Coach
+                    </h3>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">
+                      Draft a text you can send to this customer.
+                    </p>
+                    
+                    <button
+                      onClick={handleOwnerAssistClick}
+                      disabled={ownerAssistLoading}
+                      className="w-full px-4 py-2 text-sm font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 dark:hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {ownerAssistLoading ? "Drafting…" : "Draft follow-up message"}
+                    </button>
+
+                    {ownerAssistError && (
+                      <div className="mt-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2">
+                        {ownerAssistError}
+                      </div>
+                    )}
+
+                    {ownerAssistText && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                            Suggested message:
+                          </span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ownerAssistText);
+                              toast({
+                                title: "Copied!",
+                                description: "Message copied to clipboard",
+                                type: "success",
+                              });
+                            }}
+                            className="text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <div className="rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-zinc-900 p-3 text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+                          {ownerAssistText}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>
