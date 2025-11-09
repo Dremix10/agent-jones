@@ -70,6 +70,23 @@ export function updateLead(id: string, patch: Partial<Lead>): Lead | undefined {
   return updated;
 }
 
+/**
+ * Update lead fields from AI action response
+ * This is a convenience wrapper around updateLead with explicit naming
+ */
+export function updateLeadFields(id: string, updates: Partial<Lead>): Lead | null {
+  const lead = leads.get(id);
+  if (!lead) return null;
+
+  const updated: Lead = {
+    ...lead,
+    ...updates,
+  };
+
+  leads.set(id, updated);
+  return updated;
+}
+
 export function addMessageToLead(
   id: string,
   message: Omit<LeadMessage, "id" | "createdAt">,
