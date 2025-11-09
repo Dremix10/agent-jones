@@ -8,6 +8,7 @@ import ActionBadge from "@/components/ActionBadge";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
 import { ChatBubbleSkeleton } from "@/components/Skeleton";
+import HotkeyHelp, { HelpButton } from "@/components/HotkeyHelp";
 import type { SlotOption } from "@/lib/types";
 
 type LeadMessageShape = {
@@ -122,9 +123,19 @@ export default function DemoPage() {
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [hasShownSlotsOnce, setHasShownSlotsOnce] = useState(false);
   const [showSlots, setShowSlots] = useState(true);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Hotkey definitions for help modal
+  const demoHotkeys = [
+    { key: "1 / 2 / 3", description: "Load demo scenario" },
+    { key: "Enter", description: "Start conversation" },
+    { key: "S", description: "Select first slot" },
+    { key: "O", description: "Go to owner page" },
+    { key: "Esc", description: "Close help" },
+  ];
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -469,9 +480,12 @@ export default function DemoPage() {
           MOCK MODE
         </div>
       )}
-      <div className="fixed top-20 right-4 z-40 text-xs text-zinc-500 dark:text-zinc-600 text-right max-w-xs">
-        Hotkeys: 1/2/3 pick scenario • Enter start • S select slot • O owner
+      
+      {/* Help button */}
+      <div className="fixed top-4 right-4 z-40">
+        <HelpButton onClick={() => setShowHelpModal(true)} />
       </div>
+
       <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
@@ -742,6 +756,13 @@ export default function DemoPage() {
           )}
         </div>
       </main>
+
+      {/* Hotkey Help Modal */}
+      <HotkeyHelp
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        hotkeys={demoHotkeys}
+      />
     </div>
   );
 }

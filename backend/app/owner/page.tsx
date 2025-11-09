@@ -9,6 +9,7 @@ import StatusPill from "@/components/StatusPill";
 import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
 import { TableSkeleton } from "@/components/Skeleton";
+import HotkeyHelp, { HelpButton } from "@/components/HotkeyHelp";
 
 type StatusFilterSet = Set<LeadStatus>;
 
@@ -72,6 +73,15 @@ export default function OwnerPage() {
   
   // Copy toast state
   const [copied, setCopied] = useState(false);
+  
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // Hotkey definitions for help modal
+  const ownerHotkeys = [
+    { key: "Click row", description: "View lead details" },
+    { key: "Esc", description: "Close drawer/help" },
+  ];
 
   // Initialize filters from URL
   useEffect(() => {
@@ -380,6 +390,12 @@ export default function OwnerPage() {
           MOCK MODE
         </div>
       )}
+      
+      {/* Help button */}
+      <div className="fixed top-4 right-4 z-40">
+        <HelpButton onClick={() => setShowHelpModal(true)} />
+      </div>
+
       <main className="min-h-screen p-4 sm:p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         
@@ -837,6 +853,13 @@ export default function OwnerPage() {
           Copied to clipboard
         </div>
       )}
+
+      {/* Hotkey Help Modal */}
+      <HotkeyHelp
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        hotkeys={ownerHotkeys}
+      />
     </div>
   );
 }
