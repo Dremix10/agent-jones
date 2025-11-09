@@ -64,7 +64,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cx(
-        "rounded-2xl shadow p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800",
+        "rounded-2xl shadow p-4 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-neutral-800 text-zinc-900 dark:text-zinc-100",
         className
       )}
       {...props}
@@ -73,7 +73,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cx("text-xl font-semibold mb-2", className)} {...props} />;
+  return <h2 className={cx("text-xl font-semibold mb-2 text-zinc-800 dark:text-zinc-100", className)} {...props} />;
 }
 
 export function BigStat({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -86,7 +86,7 @@ export function PrimaryButton({ className, ...props }: React.ButtonHTMLAttribute
       className={cx(
         "rounded-2xl shadow px-4 py-2 font-medium",
         "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800",
-        "dark:bg-blue-500 dark:hover:bg-blue-600 dark:active:bg-blue-700",
+        "dark:bg-blue-500 dark:hover:bg-blue-400 dark:active:bg-blue-300",
         className
       )}
       {...props}
