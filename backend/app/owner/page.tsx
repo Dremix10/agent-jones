@@ -93,14 +93,21 @@ export default function OwnerPage() {
   }
 
   // Compute summary metrics from leads
+  const today = new Date();
+  const todayStr = today.toDateString();
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toDateString();
+
   const leadsToday = leads.filter((lead) => {
     const createdDate = new Date(lead.createdAt);
-    const today = new Date();
-    return (
-      createdDate.getFullYear() === today.getFullYear() &&
-      createdDate.getMonth() === today.getMonth() &&
-      createdDate.getDate() === today.getDate()
-    );
+    return createdDate.toDateString() === todayStr;
+  }).length;
+
+  const leadsYesterday = leads.filter((lead) => {
+    const createdDate = new Date(lead.createdAt);
+    return createdDate.toDateString() === yesterdayStr;
   }).length;
 
   const bookedRevenue = leads
@@ -108,6 +115,8 @@ export default function OwnerPage() {
     .reduce((sum, lead) => sum + (lead.estimatedRevenue || 0), 0);
 
   const escalations = leads.filter((lead) => lead.status === "ESCALATE").length;
+
+  const leadsDelta = leadsToday - leadsYesterday;
 
   return (
     <div>
@@ -122,30 +131,53 @@ export default function OwnerPage() {
         
         {/* Summary Strip */}
         <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
-            <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
-              Leads Today
+          <div 
+            className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
+            title="Number of leads created today"
+          >
+            <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1 flex items-center justify-between">
+              <span>Leads Today</span>
+              {leadsDelta !== 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${leadsDelta > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
+                  {leadsDelta > 0 ? '+' : ''}{leadsDelta} vs yesterday
+                </span>
+              )}
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               {leadsToday}
             </div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+              today
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div 
+            className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
+            title="Total estimated revenue from booked leads"
+          >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Booked Revenue
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
               ${bookedRevenue.toFixed(0)}
             </div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+              lifetime
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm">
+          <div 
+            className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
+            title="Leads flagged for owner review"
+          >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Escalations
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
               {escalations}
+            </div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+              needs attention
             </div>
           </div>
         </div>
