@@ -94,6 +94,9 @@ export default function OwnerPage() {
   // Loading and error state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Copy toast state
+  const [copied, setCopied] = useState(false);
 
   // Initialize filters from URL
   useEffect(() => {
@@ -377,11 +380,14 @@ export default function OwnerPage() {
           <button
             onClick={() => {
               const briefing = `Daily Briefing\n\nLeads Today: ${leadsToday}${leadsDelta !== 0 ? ` (${leadsDelta > 0 ? '+' : ''}${leadsDelta} vs yesterday)` : ''}\nBooked Revenue: $${bookedRevenue.toFixed(0)} lifetime\nEscalations: ${escalations} needs attention`;
-              copyToClipboard(briefing, "Daily briefing");
+              navigator.clipboard.writeText(briefing);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
             }}
             className="p-2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition"
-            aria-label="Copy daily briefing"
+            aria-label="Copy briefing"
             title="Copy"
+            data-testid="copy-briefing"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -803,6 +809,16 @@ export default function OwnerPage() {
             </div>
           </div>
         </>
+      )}
+      
+      {/* Inline copy toast */}
+      {copied && (
+        <div 
+          className="fixed bottom-4 right-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-4 py-2 rounded-lg shadow-lg text-sm font-medium"
+          data-testid="toast-copied"
+        >
+          Copied to clipboard
+        </div>
       )}
     </div>
   );
