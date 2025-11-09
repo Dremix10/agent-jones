@@ -33,8 +33,8 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Merge any updated lead fields from the AI response before adding the AI reply
     let leadForAiReply = updatedLead;
-    if (action && (action as any).updatedLeadFields) {
-      const merged = updateLeadFields(id, (action as any).updatedLeadFields);
+    if (action && action.updatedLeadFields) {
+      const merged = updateLeadFields(id, action.updatedLeadFields);
       if (merged) {
         leadForAiReply = merged;
       }
