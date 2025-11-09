@@ -10,6 +10,42 @@ type LeadMessageShape = {
   createdAt: string;
 };
 
+// localStorage helpers for cross-page persistence
+const LOCAL_LEADS_KEY = "agentJonesLeads";
+
+function loadLocalLeads(): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(LOCAL_LEADS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalLeads(leads: any[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(leads));
+  } catch {
+    // ignore quota errors etc.
+  }
+}
+
+function upsertLocalLead(newLead: any) {
+  if (!newLead || !newLead.id) return;
+  const existing = loadLocalLeads();
+  const idx = existing.findIndex((l: any) => l.id === newLead.id);
+  if (idx === -1) {
+    existing.unshift(newLead);
+  } else {
+    existing[idx] = newLead;
+  }
+  saveLocalLeads(existing);
+}
+
 export default function DemoPage() {
   // Form state
   const [name, setName] = useState("");
@@ -54,6 +90,8 @@ export default function DemoPage() {
         setLeadId(data.lead.id);
         setMessages(data.lead.messages || []);
         setError(null);
+        // Persist to localStorage for cross-page access
+        upsertLocalLead(data.lead);
       } else {
         console.error("Unexpected response structure:", data);
         throw new Error("Unexpected response from server");
@@ -107,6 +145,8 @@ export default function DemoPage() {
       // Replace with server's source of truth
       if (data.lead && data.lead.messages) {
         setMessages(data.lead.messages);
+        // Persist updated lead with all messages to localStorage
+        upsertLocalLead(data.lead);
       } else {
         console.error("Unexpected response structure:", data);
         throw new Error("Unexpected response from server");
