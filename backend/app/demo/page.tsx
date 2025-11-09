@@ -516,7 +516,7 @@ export default function DemoPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                className="w-full rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 disabled={isLoading}
               >
                 {isLoading ? "Starting..." : "Begin Request →"}
@@ -573,13 +573,14 @@ export default function DemoPage() {
                       setJobDetails("");
                       setError(null);
                     }}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1"
+                    aria-label="Start new conversation"
                   >
                   New conversation
                 </button>
               </div>
 
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 max-h-96 overflow-y-auto" aria-live="polite" aria-atomic="false">
                 {/* Show skeleton during initial load */}
                 {isLoading && messages.length === 0 ? (
                   <ChatSkeleton />
@@ -631,25 +632,29 @@ export default function DemoPage() {
                           — Suggested times —
                         </div>
                         <div className="flex flex-col gap-2">
-                          {msg.slotOptions.map((slot, slotIdx) => (
-                            <button
-                              key={slot.id}
-                              data-slot-button={slotIdx}
-                              onClick={() => handleSlotClick(slotIdx)}
-                              disabled={isLoading}
-                              className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-full border-2 border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 text-violet-900 dark:text-violet-100 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-400 dark:hover:border-violet-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] group"
-                            >
-                              <div className="flex flex-col items-start">
-                                <div className="font-semibold">Option {slotIdx + 1}</div>
-                                <div className="text-xs opacity-80">
-                                  {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
+                          {msg.slotOptions.map((slot, slotIdx) => {
+                            const slotTime = `${formatSlotTime(slot.start)} to ${formatSlotTime(slot.end)}`;
+                            return (
+                              <button
+                                key={slot.id}
+                                data-slot-button={slotIdx}
+                                onClick={() => handleSlotClick(slotIdx)}
+                                disabled={isLoading}
+                                aria-label={`Proposed time ${slotTime}`}
+                                className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-full border-2 border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 text-violet-900 dark:text-violet-100 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-400 dark:hover:border-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] group"
+                              >
+                                <div className="flex flex-col items-start">
+                                  <div className="font-semibold">Option {slotIdx + 1}</div>
+                                  <div className="text-xs opacity-80">
+                                    {formatSlotTime(slot.start)} – {formatSlotTime(slot.end)}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="text-violet-600 dark:text-violet-400 group-hover:translate-x-1 transition-transform">
-                                →
-                              </div>
-                            </button>
-                          ))}
+                                <div className="text-violet-600 dark:text-violet-400 group-hover:translate-x-1 transition-transform">
+                                  →
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -692,8 +697,9 @@ export default function DemoPage() {
                 />
                 <button
                   type="submit"
-                  className="rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                  className="rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                   disabled={isLoading || !input.trim()}
+                  aria-label="Send message"
                 >
                   Send
                 </button>
@@ -724,7 +730,7 @@ export default function DemoPage() {
             {leadStatus === "BOOKED" && leadId && (
               <Link
                 href={`/owner?lead=${leadId}`}
-                className="block w-full text-center mt-3 rounded-md px-4 py-2 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-300 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 transition"
+                className="block w-full text-center mt-3 rounded-md px-4 py-2 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-300 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500 transition"
               >
                 See Job in Dashboard →
               </Link>

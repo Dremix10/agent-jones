@@ -84,6 +84,8 @@ export default function OwnerPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
   
   // Filter state from URL
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
@@ -157,6 +159,41 @@ export default function OwnerPage() {
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isDrawerOpen]);
 
+  // Focus trap for drawer
+  useEffect(() => {
+    if (!isDrawerOpen || !drawerRef.current) return;
+
+    const drawer = drawerRef.current;
+    const focusableElements = drawer.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    }
+
+    drawer.addEventListener('keydown', handleTab);
+    firstElement?.focus();
+
+    return () => {
+      drawer.removeEventListener('keydown', handleTab);
+    };
+  }, [isDrawerOpen]);
+
   // Auto-scroll messages to bottom
   useEffect(() => {
     if (isDrawerOpen && messagesEndRef.current) {
@@ -165,13 +202,21 @@ export default function OwnerPage() {
   }, [isDrawerOpen, selectedLead?.messages]);
 
   function openDrawer(lead: Lead) {
+    // Store currently focused element
+    lastFocusedElement.current = document.activeElement as HTMLElement;
     setSelectedLead(lead);
     setIsDrawerOpen(true);
   }
 
   function closeDrawer() {
     setIsDrawerOpen(false);
-    setTimeout(() => setSelectedLead(null), 300);
+    setTimeout(() => {
+      setSelectedLead(null);
+      // Restore focus to the row that opened the drawer
+      if (lastFocusedElement.current) {
+        lastFocusedElement.current.focus();
+      }
+    }, 300);
   }
 
   function copyToClipboard(text: string, label: string) {
@@ -333,7 +378,7 @@ export default function OwnerPage() {
         <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
           <div 
             className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
-            title="Number of leads created today"
+            aria-label={`Leads today: ${leadsToday}${leadsDelta !== 0 ? `, ${leadsDelta > 0 ? 'up' : 'down'} ${Math.abs(leadsDelta)} from yesterday` : ''}`}
           >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1 flex items-center justify-between">
               <span>Leads Today</span>
@@ -353,7 +398,7 @@ export default function OwnerPage() {
 
           <div 
             className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
-            title="Total estimated revenue from booked leads"
+            aria-label={`Booked revenue: $${bookedRevenue.toFixed(0)} lifetime`}
           >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Booked Revenue
@@ -368,7 +413,7 @@ export default function OwnerPage() {
 
           <div 
             className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 sm:p-4 shadow-sm"
-            title="Leads flagged for owner review"
+            aria-label={`Escalations: ${escalations} leads need attention`}
           >
             <div className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-1">
               Escalations
@@ -386,7 +431,7 @@ export default function OwnerPage() {
           <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Recent Leads</h1>
           <Link
             href="/demo"
-            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition"
           >
             ← Back to Demo
           </Link>
@@ -404,7 +449,8 @@ export default function OwnerPage() {
                 <button
                   key={status}
                   onClick={() => handleStatusFilter(status)}
-                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full transition whitespace-nowrap ${
+                  aria-pressed={statusFilter === status}
+                  className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition whitespace-nowrap ${
                     statusFilter === status
                       ? "bg-blue-600 text-white"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -449,7 +495,7 @@ export default function OwnerPage() {
                   setSearchQuery("");
                   updateFilters("All", "");
                 }}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded px-2 py-1 font-medium"
               >
                 Clear filters
               </button>
@@ -479,7 +525,15 @@ export default function OwnerPage() {
                     <tr
                       key={lead.id}
                       onClick={() => openDrawer(lead)}
-                      className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openDrawer(lead);
+                        }
+                      }}
+                      className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 cursor-pointer transition"
+                      aria-label={`View details for ${lead.name}, ${lead.phone}`}
                     >
                       <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
                         {new Date(lead.createdAt).toLocaleDateString()}
@@ -556,10 +610,10 @@ export default function OwnerPage() {
           />
           
           {/* Drawer */}
-          <div className="fixed right-0 top-0 bottom-0 w-full sm:max-w-2xl bg-white dark:bg-neutral-900 shadow-2xl z-50 overflow-y-auto">
+          <div ref={drawerRef} className="fixed right-0 top-0 bottom-0 w-full sm:max-w-2xl bg-white dark:bg-neutral-900 shadow-2xl z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
             <div className="sticky top-0 bg-white dark:bg-neutral-900 border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4 flex items-center justify-between">
               <div className="flex-1 min-w-0 pr-4">
-                <h2 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                <h2 id="drawer-title" className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                   {selectedLead?.name}
                 </h2>
                 <div className="flex flex-wrap gap-2 sm:gap-3 items-center text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1">
@@ -571,8 +625,8 @@ export default function OwnerPage() {
                   </a>
                   <button
                     onClick={() => selectedLead?.phone && copyToClipboard(selectedLead.phone, "Phone")}
-                    className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                    title="Copy phone"
+                    className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded"
+                    aria-label="Copy phone number"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -584,8 +638,8 @@ export default function OwnerPage() {
                       <span className="truncate">{selectedLead.email}</span>
                       <button
                         onClick={() => selectedLead?.email && copyToClipboard(selectedLead.email, "Email")}
-                        className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-                        title="Copy email"
+                        className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded"
+                        aria-label="Copy email address"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -599,8 +653,8 @@ export default function OwnerPage() {
                 {selectedLead && <StatusPill status={selectedLead.status} />}
                 <button
                   onClick={closeDrawer}
-                  className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  aria-label="Close"
+                  className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 rounded p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Close drawer"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
