@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { USE_MOCK } from "@/components/config";
 import { TableSkeleton } from "@/components/Skeleton";
 import HotkeyHelp, { HelpButton } from "@/components/HotkeyHelp";
+import CountUp from "@/components/CountUp";
 
 type StatusFilterSet = Set<LeadStatus>;
 
@@ -444,7 +445,7 @@ export default function OwnerPage() {
               )}
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-              {leadsToday}
+              <CountUp value={leadsToday} />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
               today
@@ -459,7 +460,7 @@ export default function OwnerPage() {
               Booked Revenue
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
-              ${bookedRevenue.toFixed(0)}
+              <CountUp value={bookedRevenue} prefix="$" />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
               lifetime
@@ -474,7 +475,7 @@ export default function OwnerPage() {
               Escalations
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
-              {escalations}
+              <CountUp value={escalations} />
             </div>
             <div className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
               needs attention
