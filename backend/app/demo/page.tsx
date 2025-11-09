@@ -88,30 +88,53 @@ export default function DemoPage() {
       
       if (data.lead && data.lead.id) {
         setLeadId(data.lead.id);
-        
-        // Create a synthetic AI greeting message (client-side only)
-        // Make it dynamic based on the jobDetails input
-        const trimmedDetails = jobDetails.trim();
-        const hasDetails = trimmedDetails.length > 0;
-
-        const detailsSnippet = hasDetails
-          ? ` I see you're interested in: "${trimmedDetails}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
-          : ` You can ask about pricing, availability this week, or help booking a full detail.`;
-
-        const greetingBody = `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing.${detailsSnippet}`;
-
-        const greetingMessage: LeadMessageShape = {
-          id: "welcome",
-          from: "ai",
-          body: greetingBody,
-          createdAt: new Date().toISOString(),
-        };
-        
-        // Prepend greeting, then append any existing messages from backend
-        setMessages([greetingMessage, ...(data.lead.messages || [])]);
         setError(null);
-        // Persist to localStorage for cross-page access
         upsertLocalLead(data.lead);
+
+        // Call the welcome endpoint to get a real AI-generated greeting
+        try {
+          const welcomeRes = await fetch(`/api/leads/${data.lead.id}/welcome`, {
+            method: "POST",
+          });
+
+          if (!welcomeRes.ok) {
+            console.error("Failed to fetch welcome message", await welcomeRes.text());
+            // Fallback: create the static greeting on the client
+            const fallbackBody = jobDetails.trim()
+              ? `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I see you're interested in: "${jobDetails.trim()}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
+              : `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. You can ask about pricing, availability this week, or help booking a full detail.`;
+
+            const fallbackMsg: LeadMessageShape = {
+              id: "welcome-fallback",
+              from: "ai",
+              body: fallbackBody,
+              createdAt: new Date().toISOString(),
+            };
+
+            setMessages([fallbackMsg, ...(data.lead.messages || [])]);
+          } else {
+            const welcomeData = await welcomeRes.json();
+            const welcomeMessage: LeadMessageShape = welcomeData.message;
+
+            // Start chat with the real AI-generated greeting
+            setMessages([welcomeMessage, ...(data.lead.messages || [])]);
+          }
+        } catch (err) {
+          console.error("Error generating welcome message", err);
+          // Same fallback as above
+          const fallbackBody = jobDetails.trim()
+            ? `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. I see you're interested in: "${jobDetails.trim()}". I can confirm pricing, check availability, and help you lock in a booking so you don't have to repeat all that.`
+            : `Hi! I'm your AI front desk for Houston's Finest Mobile Detailing. You can ask about pricing, availability this week, or help booking a full detail.`;
+
+          const fallbackMsg: LeadMessageShape = {
+            id: "welcome-fallback",
+            from: "ai",
+            body: fallbackBody,
+            createdAt: new Date().toISOString(),
+          };
+
+          setMessages([fallbackMsg, ...(data.lead.messages || [])]);
+        }
       } else {
         console.error("Unexpected response structure:", data);
         throw new Error("Unexpected response from server");
