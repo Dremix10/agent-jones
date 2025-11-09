@@ -18,6 +18,92 @@ type LeadMessageShape = {
   slotOptions?: SlotOption[];
 };
 
+// Inline EscalationBanner component
+function EscalationBanner({ 
+  reason, 
+  onNotify 
+}: { 
+  reason: string; 
+  onNotify: () => void 
+}) {
+  return (
+    <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800 rounded-lg p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-600 dark:bg-red-500 flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-red-900 dark:text-red-300 mb-1">
+            Escalation Required
+          </h3>
+          <p className="text-sm text-red-800 dark:text-red-400">
+            {reason}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onNotify}
+        className="w-full rounded-md px-4 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 dark:hover:bg-red-500 transition shadow-sm"
+      >
+        Notify Owner
+      </button>
+    </div>
+  );
+}
+
+// Error banner component
+function ErrorBanner({ 
+  message, 
+  onRetry 
+}: { 
+  message: string; 
+  onRetry: () => void 
+}) {
+  return (
+    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 dark:bg-yellow-500 flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-1">
+            Error
+          </h3>
+          <p className="text-sm text-yellow-800 dark:text-yellow-400">
+            {message}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onRetry}
+        className="w-full rounded-md px-4 py-2 text-sm font-semibold bg-yellow-600 text-white hover:bg-yellow-700 dark:hover:bg-yellow-500 transition shadow-sm"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+// Chat skeleton loader
+function ChatSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
+          <div className={`max-w-[80%] rounded-lg px-3 py-2 ${i % 2 === 0 ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-200 dark:bg-neutral-800"}`}>
+            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-48 mb-2"></div>
+            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-20"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DemoPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -250,6 +336,24 @@ export default function DemoPage() {
     }
   }
 
+  function handleEscalationNotify() {
+    const systemMessage: LeadMessageShape = {
+      id: `system-${Date.now()}`,
+      from: "ai",
+      body: "Escalation requested by assistant.",
+      createdAt: new Date().toISOString(),
+      action: "none",
+    };
+    
+    setMessages((prev) => [...prev, systemMessage]);
+    
+    toast({
+      title: "Owner notified (mock)",
+      description: "The escalation has been sent to the owner",
+      type: "success",
+    });
+  }
+
   function formatTime(isoString: string): string {
     const date = new Date(isoString);
     return date.toLocaleTimeString("en-US", {
@@ -423,6 +527,40 @@ export default function DemoPage() {
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 Customer Conversation
               </h2>
+              
+              {/* Escalation Banner - show if last AI message has action === "escalate" */}
+              {(() => {
+                const lastAiMessage = messages.filter((m) => m.from === "ai").pop();
+                if (lastAiMessage?.action === "escalate") {
+                  return (
+                    <EscalationBanner 
+                      reason={lastAiMessage.body}
+                      onNotify={handleEscalationNotify}
+                    />
+                  );
+                }
+                return null;
+              })()}
+              
+              {/* Error Banner */}
+              {error && !isLoading && (
+                <ErrorBanner 
+                  message={error}
+                  onRetry={() => {
+                    setError(null);
+                    if (leadId) {
+                      // Retry sending last message
+                      if (input.trim()) {
+                        handleSendMessage(input);
+                      }
+                    } else {
+                      // Retry creating lead
+                      handleSubmit(new Event('submit') as any);
+                    }
+                  }}
+                />
+              )}
+              
               <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-neutral-900 space-y-4">
                 <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-2">
                   <p className="font-medium">Chat with AI</p>
@@ -442,7 +580,11 @@ export default function DemoPage() {
               </div>
 
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {messages.map((msg, idx) => (
+                {/* Show skeleton during initial load */}
+                {isLoading && messages.length === 0 ? (
+                  <ChatSkeleton />
+                ) : (
+                  messages.map((msg, idx) => (
                   <div key={msg.id}>
                     <div
                       className={`flex ${
@@ -512,9 +654,10 @@ export default function DemoPage() {
                       </div>
                     )}
                   </div>
-                ))}
+                  ))
+                )}
 
-                {isLoading && (
+                {isLoading && messages.length > 0 && (
                   <div className="flex justify-start">
                     <div className="bg-gray-200 dark:bg-neutral-800 rounded-lg px-3 py-2">
                       <div className="flex space-x-1">
@@ -538,12 +681,6 @@ export default function DemoPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {error && (
-                <div className="text-sm text-red-600 dark:text-red-400">
-                  {error}
-                </div>
-              )}
-
               <form onSubmit={handleTextSubmit} className="flex gap-2">
                 <input
                   type="text"
@@ -561,6 +698,27 @@ export default function DemoPage() {
                   Send
                 </button>
               </form>
+              
+              {/* Action Info Line */}
+              {(() => {
+                const lastAiMessage = messages.filter((m) => m.from === "ai").pop();
+                const currentAction = lastAiMessage?.action || "none";
+                const actions = ["ask", "offer_slots", "confirm_booking", "escalate"];
+                
+                return (
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                    <span>Actions: </span>
+                    {actions.map((action, idx) => (
+                      <span key={action}>
+                        <span className={currentAction === action ? "font-semibold text-blue-600 dark:text-blue-400" : ""}>
+                          {action}
+                        </span>
+                        {idx < actions.length - 1 && <span> / </span>}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
 
             {leadStatus === "BOOKED" && leadId && (

@@ -11,6 +11,71 @@ import { USE_MOCK } from "@/components/config";
 
 type StatusFilter = "All" | "NEW" | "QUALIFIED" | "BOOKED" | "ESCALATE";
 
+// Table skeleton loader
+function TableSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <tr key={i} className="border-t border-zinc-200 dark:border-zinc-800">
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-20"></div>
+          </td>
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32"></div>
+          </td>
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
+          </td>
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-40"></div>
+          </td>
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+          </td>
+          <td className="px-3 py-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+          </td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+// Error banner component
+function ErrorBanner({ 
+  message, 
+  onRetry 
+}: { 
+  message: string; 
+  onRetry: () => void 
+}) {
+  return (
+    <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-4 mb-6 space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-600 dark:bg-yellow-500 flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-yellow-900 dark:text-yellow-300 mb-1">
+            Error Loading Leads
+          </h3>
+          <p className="text-sm text-yellow-800 dark:text-yellow-400">
+            {message}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onRetry}
+        className="w-full rounded-md px-4 py-2 text-sm font-semibold bg-yellow-600 text-white hover:bg-yellow-700 dark:hover:bg-yellow-500 transition shadow-sm"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
 export default function OwnerPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -23,6 +88,10 @@ export default function OwnerPage() {
   // Filter state from URL
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Loading and error state
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize filters from URL
   useEffect(() => {
@@ -40,25 +109,26 @@ export default function OwnerPage() {
 
   useEffect(() => {
     async function loadLeads() {
+      setIsLoading(true);
+      setError(null);
       try {
         const res = await fetch("/api/leads");
         if (!res.ok) {
-          toast({
-            title: "Error loading leads",
-            description: "Failed to fetch leads from server",
-            type: "error",
-          });
-          return;
+          throw new Error("Failed to fetch leads from server");
         }
         const data = await res.json();
         setLeads(data.leads ?? []);
       } catch (err) {
         console.error(err);
+        const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+        setError(errorMessage);
         toast({
           title: "Error loading leads",
-          description: err instanceof Error ? err.message : "An unexpected error occurred",
+          description: errorMessage,
           type: "error",
         });
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -112,6 +182,30 @@ export default function OwnerPage() {
         type: "success",
       });
     });
+  }
+
+  async function retryLoadLeads() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/leads");
+      if (!res.ok) {
+        throw new Error("Failed to fetch leads from server");
+      }
+      const data = await res.json();
+      setLeads(data.leads ?? []);
+    } catch (err) {
+      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      toast({
+        title: "Error loading leads",
+        description: errorMessage,
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function formatTime(isoString: string): string {
@@ -222,6 +316,14 @@ export default function OwnerPage() {
       )}
       <main className="min-h-screen p-4 sm:p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
+        
+        {/* Error Banner */}
+        {error && !isLoading && (
+          <ErrorBanner 
+            message={error}
+            onRetry={retryLoadLeads}
+          />
+        )}
         
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
           Jobs and Revenue Overview
@@ -368,35 +470,40 @@ export default function OwnerPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredLeads.map((lead) => (
-                <tr
-                  key={lead.id}
-                  onClick={() => openDrawer(lead)}
-                  className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition"
-                >
-                  <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
-                    {new Date(lead.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-3 py-2 max-w-[150px]" title={lead.name}>
-                    <div className="truncate text-zinc-900 dark:text-zinc-100">{lead.name}</div>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{lead.phone}</td>
-                  <td className="px-3 py-2 max-w-[200px]" title={lead.serviceRequested || lead.jobDetails || ""}>
-                    <div className="truncate text-zinc-700 dark:text-zinc-300">
-                      {lead.serviceRequested || lead.jobDetails || "—"}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={lead.status} />
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-zinc-900 dark:text-zinc-100 font-medium">
-                    {lead.estimatedRevenue
-                      ? `$${lead.estimatedRevenue.toFixed(0)}`
-                      : "—"}
-                  </td>
-                </tr>
-              ))}
-              {filteredLeads.length === 0 && leads.length > 0 && (
+              {/* Show skeleton during initial load */}
+              {isLoading ? (
+                <TableSkeleton />
+              ) : (
+                <>
+                  {filteredLeads.map((lead) => (
+                    <tr
+                      key={lead.id}
+                      onClick={() => openDrawer(lead)}
+                      className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition"
+                    >
+                      <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+                        {new Date(lead.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-3 py-2 max-w-[150px]" title={lead.name}>
+                        <div className="truncate text-zinc-900 dark:text-zinc-100">{lead.name}</div>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-zinc-600 dark:text-zinc-400">{lead.phone}</td>
+                      <td className="px-3 py-2 max-w-[200px]" title={lead.serviceRequested || lead.jobDetails || ""}>
+                        <div className="truncate text-zinc-700 dark:text-zinc-300">
+                          {lead.serviceRequested || lead.jobDetails || "—"}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <StatusPill status={lead.status} />
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-zinc-900 dark:text-zinc-100 font-medium">
+                        {lead.estimatedRevenue
+                          ? `$${lead.estimatedRevenue.toFixed(0)}`
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredLeads.length === 0 && leads.length > 0 && (
                 <tr>
                   <td className="px-3 py-12 text-center text-zinc-500 dark:text-zinc-400" colSpan={6}>
                     <div className="flex flex-col items-center gap-3">
@@ -431,6 +538,8 @@ export default function OwnerPage() {
                     </div>
                   </td>
                 </tr>
+              )}
+                </>
               )}
             </tbody>
           </table>
