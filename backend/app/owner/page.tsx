@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
+import { useToast } from "@/components/Toast";
 
 const USE_MOCK = true;
 
 export default function OwnerPage() {
+  const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -16,16 +18,28 @@ export default function OwnerPage() {
     async function loadLeads() {
       try {
         const res = await fetch("/api/leads");
-        if (!res.ok) return;
+        if (!res.ok) {
+          toast({
+            title: "Error loading leads",
+            description: "Failed to fetch leads from server",
+            type: "error",
+          });
+          return;
+        }
         const data = await res.json();
         setLeads(data.leads ?? []);
       } catch (err) {
         console.error(err);
+        toast({
+          title: "Error loading leads",
+          description: err instanceof Error ? err.message : "An unexpected error occurred",
+          type: "error",
+        });
       }
     }
 
     loadLeads();
-  }, []);
+  }, [toast]);
 
   // Close drawer on ESC key
   useEffect(() => {

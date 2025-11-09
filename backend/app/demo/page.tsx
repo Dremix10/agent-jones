@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/ui";
 import ActionBadge from "@/components/ActionBadge";
+import { useToast } from "@/components/Toast";
 import type { SlotOption } from "@/lib/types";
 
 type LeadMessageShape = {
@@ -15,6 +16,8 @@ type LeadMessageShape = {
 };
 
 export default function DemoPage() {
+  const { toast } = useToast();
+  
   // Form state
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -77,7 +80,13 @@ export default function DemoPage() {
       }
     } catch (err) {
       console.error("Error in handleSubmit:", err);
-      setError(err instanceof Error ? err.message : "Failed to create lead. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to create lead. Please try again.";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -128,6 +137,16 @@ export default function DemoPage() {
           slotOptions: msg.slotOptions,
         }));
         setMessages(mappedMessages);
+        
+        // Check if booking was confirmed
+        const lastAiMessage = mappedMessages.filter((m: any) => m.from === "ai").pop();
+        if (lastAiMessage?.action === "confirm_booking" || data.lead.status === "BOOKED") {
+          toast({
+            title: "Booked!",
+            description: "Your appointment has been confirmed. Calendar event created.",
+            type: "success",
+          });
+        }
       } else {
         console.error("Unexpected response structure:", data);
         throw new Error("Unexpected response from server");
@@ -136,7 +155,13 @@ export default function DemoPage() {
       setError(null);
     } catch (err) {
       console.error("Error in handleSendMessage:", err);
-      setError(err instanceof Error ? err.message : "Can't send a message right now. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Can't send a message right now. Please try again.";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        type: "error",
+      });
       // Rollback optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
       setInput(messageText);
