@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/ui";
 import ActionBadge from "@/components/ActionBadge";
 import { useToast } from "@/components/Toast";
+import { USE_MOCK } from "@/components/config";
 import type { SlotOption } from "@/lib/types";
 
 type LeadMessageShape = {
@@ -172,6 +173,7 @@ export default function DemoPage() {
   }
 
   function handleSlotClick(index: number) {
+    // TODO: When real PATCH exists, call /api/leads/:id with { selectedSlot: index }
     handleSendMessage(`SELECT_SLOT:${index}`);
   }
 
@@ -273,6 +275,11 @@ export default function DemoPage() {
   return (
     <div>
       <Header title="Customer Demo" showThemeToggle />
+      {USE_MOCK && (
+        <div className="fixed top-4 right-4 z-50 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-medium border border-amber-300 dark:border-amber-700">
+          MOCK MODE
+        </div>
+      )}
       <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-2xl font-semibold text-center">

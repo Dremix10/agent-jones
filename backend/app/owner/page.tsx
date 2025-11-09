@@ -5,8 +5,7 @@ import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
 import { useToast } from "@/components/Toast";
-
-const USE_MOCK = true;
+import { USE_MOCK } from "@/components/config";
 
 export default function OwnerPage() {
   const { toast } = useToast();
@@ -100,6 +99,11 @@ export default function OwnerPage() {
   return (
     <div>
       <Header title="Owner Dashboard" showThemeToggle />
+      {USE_MOCK && (
+        <div className="fixed top-4 right-4 z-50 bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-300 px-3 py-1 rounded-full text-xs font-medium border border-amber-300 dark:border-amber-700">
+          MOCK MODE
+        </div>
+      )}
       <main className="min-h-screen p-4 sm:p-6 bg-gray-50 dark:bg-zinc-950">
         <ModeBanner mode={USE_MOCK ? "MOCK" : "LIVE"} />
         
