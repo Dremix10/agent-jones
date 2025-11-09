@@ -34,6 +34,8 @@ export default function DemoPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasShownSlotsOnce, setHasShownSlotsOnce] = useState(false);
+  const [showSlots, setShowSlots] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +51,57 @@ export default function DemoPage() {
       nameInputRef.current.focus();
     }
   }, [searchParams]);
+
+  // First-time slot pacing delay (700ms breather for judges)
+  useEffect(() => {
+    const hasSlotOffer = messages.some((m) => m.action === "offer_slots");
+    if (hasSlotOffer && !hasShownSlotsOnce) {
+      setShowSlots(false);
+      setHasShownSlotsOnce(true);
+      setTimeout(() => setShowSlots(true), 700);
+    }
+  }, [messages, hasShownSlotsOnce]);
+
+  // Hotkeys for judge mode
+  useEffect(() => {
+    function handleKeyPress(e: KeyboardEvent) {
+      // Don't trigger if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // 1/2/3 = select scenario (only if no lead started)
+      if (!leadId && ["1", "2", "3"].includes(e.key)) {
+        const scenarios = [
+          { name: "Jane Smith", phone: "713-555-0101", jobDetails: "Simple wash & wax, Rice Village, tomorrow" },
+          { name: "Mike Johnson", phone: "281-555-0202", jobDetails: "Full detail, SUV, Montrose, this weekend" },
+          { name: "Sarah Lee", phone: "832-555-0303", jobDetails: "Interior cleaning, sedan, Heights, ASAP" },
+        ];
+        const idx = parseInt(e.key) - 1;
+        if (scenarios[idx]) {
+          setName(scenarios[idx].name);
+          setPhone(scenarios[idx].phone);
+          setJobDetails(scenarios[idx].jobDetails);
+        }
+      }
+
+      // S = select first slot
+      if (e.key === "s" || e.key === "S") {
+        const firstSlotButton = document.querySelector<HTMLButtonElement>('[data-slot-button="0"]');
+        if (firstSlotButton && !firstSlotButton.disabled) {
+          firstSlotButton.click();
+        }
+      }
+
+      // O = go to owner
+      if (e.key === "o" || e.key === "O") {
+        window.location.href = "/owner";
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [leadId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -293,6 +346,9 @@ export default function DemoPage() {
           MOCK MODE
         </div>
       )}
+      <div className="fixed top-20 right-4 z-40 text-xs text-zinc-500 dark:text-zinc-600 text-right max-w-xs">
+        Hotkeys: 1/2/3 pick scenario • Enter start • S select slot • O owner
+      </div>
       <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
           <h1 className="text-2xl sm:text-3xl font-semibold text-center text-zinc-900 dark:text-zinc-100">
@@ -410,7 +466,7 @@ export default function DemoPage() {
                     </div>
 
                     {/* Slot buttons if this is an offer_slots message */}
-                    {msg.from === "ai" && msg.action === "offer_slots" && msg.slotOptions && msg.slotOptions.length > 0 && (
+                    {msg.from === "ai" && msg.action === "offer_slots" && msg.slotOptions && msg.slotOptions.length > 0 && showSlots && (
                       <div className="mt-3 ml-4">
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                           — Suggested times —
@@ -419,6 +475,7 @@ export default function DemoPage() {
                           {msg.slotOptions.map((slot, slotIdx) => (
                             <button
                               key={slot.id}
+                              data-slot-button={slotIdx}
                               onClick={() => handleSlotClick(slotIdx)}
                               disabled={isLoading}
                               className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-full border-2 border-violet-300 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 text-violet-900 dark:text-violet-100 hover:bg-violet-100 dark:hover:bg-violet-900/40 hover:border-violet-400 dark:hover:border-violet-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] group"
