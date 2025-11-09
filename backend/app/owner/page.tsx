@@ -367,6 +367,68 @@ export default function OwnerPage() {
     updateURLFilters(allStatuses, "");
   }
 
+  function exportToCSV() {
+    // CSV Headers
+    const headers = [
+      "Created At",
+      "Name",
+      "Phone",
+      "Service",
+      "Status",
+      "Estimated Revenue",
+      "Chosen Slot"
+    ];
+    
+    // Helper to escape CSV values
+    const escapeCSV = (value: string | number | undefined | null): string => {
+      if (value === undefined || value === null) return "";
+      const stringValue = String(value);
+      // If value contains comma, newline, or quotes, wrap in quotes and escape internal quotes
+      if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+    
+    // Build CSV rows from filtered leads
+    const rows = filteredLeads.map((lead) => {
+      return [
+        escapeCSV(lead.createdAt),
+        escapeCSV(lead.name),
+        escapeCSV(lead.phone),
+        escapeCSV(lead.serviceRequested || lead.jobDetails || ""),
+        escapeCSV(lead.status),
+        escapeCSV(lead.estimatedRevenue || 0),
+        escapeCSV(lead.chosenSlot || "")
+      ].join(",");
+    });
+    
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    
+    // Generate filename with current date and filter context
+    const dateStr = new Date().toISOString().split("T")[0];
+    const rangeLabel = dateRange === "today" ? "today" : "all";
+    link.setAttribute("download", `leads-${rangeLabel}-${dateStr}.csv`);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "CSV Exported",
+      description: `Exported ${filteredLeads.length} lead${filteredLeads.length !== 1 ? 's' : ''} to CSV`,
+      type: "success",
+    });
+  }
+
   // Client-side filtering
   const filteredLeads = leads.filter((lead) => {
     // Date range filter
@@ -505,12 +567,24 @@ export default function OwnerPage() {
               Click a row to view details. Filter by status or search.
             </p>
           </div>
-          <Link
-            href="/demo"
-            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition"
-          >
-            ← Back to Demo
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportToCSV}
+              className="px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition flex items-center gap-2"
+              aria-label="Export filtered leads to CSV"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export CSV
+            </button>
+            <Link
+              href="/demo"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition"
+            >
+              ← Back to Demo
+            </Link>
+          </div>
         </div>
 
         {/* Filter Row */}
