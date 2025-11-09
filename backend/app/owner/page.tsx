@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
@@ -245,15 +246,20 @@ export default function OwnerPage() {
               {leads.length === 0 && (
                 <tr>
                   <td className="px-3 py-12 text-center text-zinc-500 dark:text-zinc-400" colSpan={6}>
-                    <div className="flex flex-col items-center gap-2">
-                      <p className="text-lg font-medium">No leads yet</p>
-                      <p className="text-sm">Create your first lead from the demo page</p>
-                      <a
-                        href="/demo"
-                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                    <div className="flex flex-col items-center gap-3">
+                      <svg className="w-16 h-16 text-zinc-300 dark:text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">No leads yet</p>
+                        <p className="text-sm mt-1">Get started by creating a test lead</p>
+                      </div>
+                      <Link
+                        href="/demo?focus=true"
+                        className="mt-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-500 transition-all text-sm font-semibold shadow-md hover:shadow-lg active:scale-95"
                       >
-                        Go to Demo →
-                      </a>
+                        Create a test lead →
+                      </Link>
                     </div>
                   </td>
                 </tr>

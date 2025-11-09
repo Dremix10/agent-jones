@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/ui";
 import ActionBadge from "@/components/ActionBadge";
 import { useToast } from "@/components/Toast";
@@ -19,6 +20,7 @@ type LeadMessageShape = {
 
 export default function DemoPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   
   // Form state
   const [name, setName] = useState("");
@@ -34,11 +36,19 @@ export default function DemoPage() {
   const [error, setError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-focus name input if coming from empty state
+  useEffect(() => {
+    if (searchParams.get("focus") === "true" && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -297,6 +307,7 @@ export default function DemoPage() {
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
                 <input
+                  ref={nameInputRef}
                   className="w-full bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/60 transition-colors"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
