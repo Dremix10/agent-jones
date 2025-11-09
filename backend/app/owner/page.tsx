@@ -78,6 +78,9 @@ export default function OwnerPage() {
   
   // Help modal state
   const [showHelpModal, setShowHelpModal] = useState(false);
+  
+  // Escalation banner state
+  const [showEscalationBanner, setShowEscalationBanner] = useState(true);
 
   // Hotkey definitions for help modal
   const ownerHotkeys = [
@@ -315,6 +318,9 @@ export default function OwnerPage() {
   const escalations = rangeFilteredLeads.filter((lead) => lead.status === "ESCALATE").length;
 
   const leadsDelta = leadsToday - leadsYesterday;
+  
+  // Count total escalated leads (regardless of date range) for banner
+  const totalEscalations = leads.filter((lead) => lead.status === "ESCALATE").length;
 
   // Update URL when filters change
   const updateURLFilters = useCallback((statuses: StatusFilterSet, query: string) => {
@@ -429,6 +435,16 @@ export default function OwnerPage() {
     });
   }
 
+  function viewEscalations() {
+    // Set filter to show only ESCALATE status
+    setActiveStatuses(new Set<LeadStatus>(["ESCALATE"]));
+    setDateRange("all"); // Show all escalations regardless of date
+    setSearchQuery("");
+    setDebouncedSearchQuery("");
+    updateURLFilters(new Set<LeadStatus>(["ESCALATE"]), "");
+    setShowEscalationBanner(false);
+  }
+
   // Client-side filtering
   const filteredLeads = leads.filter((lead) => {
     // Date range filter
@@ -506,6 +522,40 @@ export default function OwnerPage() {
             </svg>
           </button>
         </div>
+        
+        {/* Escalation Warning Banner */}
+        {showEscalationBanner && totalEscalations > 0 && (
+          <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-800 rounded-lg p-4 mb-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-600 dark:bg-orange-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-300">
+                    Heads up — {totalEscalations} lead{totalEscalations !== 1 ? 's' : ''} need{totalEscalations === 1 ? 's' : ''} attention.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 sm:flex-shrink-0">
+                <button
+                  onClick={viewEscalations}
+                  className="flex-1 sm:flex-none px-4 py-2 text-sm font-semibold bg-orange-600 text-white hover:bg-orange-700 dark:hover:bg-orange-500 rounded-lg transition shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                >
+                  View escalations
+                </button>
+                <button
+                  onClick={() => setShowEscalationBanner(false)}
+                  className="flex-1 sm:flex-none px-4 py-2 text-sm font-semibold border-2 border-orange-600 dark:border-orange-500 text-orange-900 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-lg transition shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Summary Strip */}
         <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 sm:gap-4 mb-6">
