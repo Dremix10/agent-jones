@@ -5,7 +5,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
       <Card className="max-w-md w-full">
-        <Header className="text-center">AI Front Desk</Header>
+        <Header title="AI Front Desk" showThemeToggle={false} />
         <p className="text-sm text-gray-600 mb-6 text-center">
           Hackathon prototype – choose a view:
         </p>
