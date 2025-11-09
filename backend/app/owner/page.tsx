@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Lead } from "@/lib/types";
 import { Header, ModeBanner } from "@/components/ui";
 import StatusPill from "@/components/StatusPill";
@@ -9,6 +10,7 @@ import { USE_MOCK } from "@/components/config";
 
 export default function OwnerPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -39,6 +41,17 @@ export default function OwnerPage() {
 
     loadLeads();
   }, [toast]);
+
+  // Auto-open drawer if lead param is present
+  useEffect(() => {
+    const leadParam = searchParams.get("lead");
+    if (leadParam && leads.length > 0) {
+      const matchedLead = leads.find((l) => l.id === leadParam);
+      if (matchedLead) {
+        openDrawer(matchedLead);
+      }
+    }
+  }, [leads, searchParams]);
 
   // Close drawer on ESC key
   useEffect(() => {

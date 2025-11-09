@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Header } from "@/components/ui";
 import ActionBadge from "@/components/ActionBadge";
 import { useToast } from "@/components/Toast";
@@ -26,6 +27,7 @@ export default function DemoPage() {
 
   // Chat state
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [leadStatus, setLeadStatus] = useState<string | null>(null);
   const [messages, setMessages] = useState<LeadMessageShape[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -138,6 +140,7 @@ export default function DemoPage() {
           slotOptions: msg.slotOptions,
         }));
         setMessages(mappedMessages);
+        setLeadStatus(data.lead.status);
         
         // Check if booking was confirmed
         const lastAiMessage = mappedMessages.filter((m: any) => m.from === "ai").pop();
@@ -468,6 +471,15 @@ export default function DemoPage() {
                   Send
                 </button>
               </form>
+
+              {leadStatus === "BOOKED" && leadId && (
+                <Link
+                  href={`/owner?lead=${leadId}`}
+                  className="block w-full text-center mt-3 rounded-md px-4 py-2 text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-300 border border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50 transition"
+                >
+                  View in dashboard →
+                </Link>
+              )}
             </div>
           )}
         </div>
