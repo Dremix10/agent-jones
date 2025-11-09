@@ -485,3 +485,117 @@ Write the first message you would send to this customer, following the system in
     throw error; // Re-throw so the route can handle fallback
   }
 }
+
+/**
+ * Context for generating an owner daily summary
+ */
+export interface OwnerDailySummaryContext {
+  dateRangeLabel: string; // e.g. "Today", "Last 24 hours"
+  totalCount: number;
+  totalEstimatedRevenue: number;
+  byStatus: {
+    NEW: number;
+    QUALIFIED: number;
+    BOOKED: number;
+    ESCALATE: number;
+  };
+  recentLeads: Array<{
+    id: string;
+    name: string;
+    status: Lead["status"];
+    estimatedRevenue: number;
+    channel: Lead["channel"];
+    createdAt: string;
+    lastMessageSnippet: string;
+  }>;
+}
+
+/**
+ * Generate an AI-written daily summary for the shop owner
+ * 
+ * This function uses Claude to create a short, skimmable briefing about
+ * the day's leads, bookings, and revenue.
+ * 
+ * @param ctx - Context with lead metrics and recent activity
+ * @returns Promise<string> - Markdown-formatted summary text
+ */
+export async function generateOwnerDailySummary(
+  ctx: OwnerDailySummaryContext
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set');
+  }
+
+  const client = new Anthropic({ apiKey });
+
+  const systemPrompt = `
+You are writing a brief daily summary for the owner of Houston's Finest Mobile Detailing.
+
+Your summary should be:
+- Short and skimmable (1 paragraph + 3-6 bullets max)
+- Focused on actionable insights
+- Written in a friendly but professional tone
+
+Highlight:
+- Total leads received
+- Booked jobs and estimated revenue
+- Any escalated or new leads needing follow-up
+- 1-3 interesting patterns or insights (e.g., common questions, peak times, service trends)
+
+Output format: Plain Markdown with headings and bullets. NO JSON.
+`.trim();
+
+  const leadsDetails = ctx.recentLeads
+    .map((lead) => {
+      const revenue = lead.estimatedRevenue > 0 ? `$${lead.estimatedRevenue}` : 'TBD';
+      return `- ${lead.name} (${lead.status}, ${revenue}, via ${lead.channel}): "${lead.lastMessageSnippet}"`;
+    })
+    .join('\n');
+
+  const userPrompt = `
+Generate a daily summary for ${ctx.dateRangeLabel}.
+
+## Metrics:
+- Total leads: ${ctx.totalCount}
+- Estimated revenue: $${ctx.totalEstimatedRevenue}
+- Status breakdown:
+  - NEW: ${ctx.byStatus.NEW}
+  - QUALIFIED: ${ctx.byStatus.QUALIFIED}
+  - BOOKED: ${ctx.byStatus.BOOKED}
+  - ESCALATE: ${ctx.byStatus.ESCALATE}
+
+## Recent leads:
+${leadsDetails || '(No leads yet)'}
+
+Write a concise daily summary following the system instructions.
+`.trim();
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 512,
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const responseText = response.content[0].type === 'text'
+      ? response.content[0].text.trim()
+      : '';
+
+    if (!responseText) {
+      throw new Error('Claude returned empty response for owner summary');
+    }
+
+    return responseText;
+  } catch (error) {
+    console.error('[Owner Summary] Error calling Claude API:', error);
+    throw error; // Re-throw so the route can handle fallback
+  }
+}
