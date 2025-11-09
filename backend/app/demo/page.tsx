@@ -293,9 +293,9 @@ export default function DemoPage() {
           MOCK MODE
         </div>
       )}
-      <main className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300 flex flex-col items-center justify-center p-4 sm:p-6">
+      <main className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
-          <h1 className="text-2xl font-semibold text-center">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-center text-zinc-900 dark:text-zinc-100">
             AI Front Desk - Lead Demo
           </h1>
 
@@ -351,7 +351,7 @@ export default function DemoPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-md px-3 py-2 text-sm font-medium border bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="w-full rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 disabled={isLoading}
               >
                 {isLoading ? "Starting..." : "Start chat with AI front desk"}
@@ -481,7 +481,7 @@ export default function DemoPage() {
                 />
                 <button
                   type="submit"
-                  className="rounded-md px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="rounded-md px-4 py-3 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                   disabled={isLoading || !input.trim()}
                 >
                   Send

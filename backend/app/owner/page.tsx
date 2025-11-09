@@ -201,7 +201,7 @@ export default function OwnerPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">Leads</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">Leads</h1>
         <div className="bg-white dark:bg-neutral-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-neutral-800">
