@@ -465,10 +465,14 @@ export default function DemoPage() {
           </div>
 
           {!leadId ? (
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-neutral-900"
-            >
+            <>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                Tip: press 1/2/3 to load a scenario
+              </p>
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-neutral-900"
+              >
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
                 <input
@@ -522,6 +526,7 @@ export default function DemoPage() {
                 {isLoading ? "Starting..." : "Begin Request →"}
               </button>
             </form>
+            </>
           ) : (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">

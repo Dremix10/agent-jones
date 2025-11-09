@@ -428,7 +428,12 @@ export default function OwnerPage() {
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Recent Leads</h1>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900 dark:text-zinc-100">Recent Leads</h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Click a row to view details. Filter by status or search.
+            </p>
+          </div>
           <Link
             href="/demo"
             className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 transition"
