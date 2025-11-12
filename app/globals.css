@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+}
+
+/* Global light/dark styles */
+:root { color-scheme: light dark; }
+
+html, body {
+  @apply min-h-screen bg-white text-zinc-900 transition-colors duration-300
+         dark:bg-zinc-950 dark:text-zinc-100;
+}
+
+input, textarea, select {
+  @apply bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100
+         placeholder-zinc-400 dark:placeholder-zinc-500
+         border border-zinc-300 dark:border-zinc-700;
+}
+
+table thead {
+  @apply bg-zinc-100 dark:bg-zinc-900;
+}
