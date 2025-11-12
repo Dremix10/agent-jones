@@ -742,23 +742,152 @@
 
 ---
 
-## 7. Future Risks (Post-Launch)
+## 7. Email & Calendar Integration Risks
 
-### Risk 7.1: Scaling to 1000+ Leads/Day
+### Risk 7.1: Email Delivery Failures
+**Severity**: 🟠 High  
+**Probability**: Medium (20%)  
+**Impact**: Customer doesn't receive booking confirmation, owner misses notification
+
+**Failure Scenarios**:
+- Resend API key invalid/expired
+- SMTP credentials wrong or server down
+- Email marked as spam (no SPF/DKIM)
+- Customer email address typo or invalid
+- Rate limit exceeded on free tier
+
+**Mitigation**:
+1. **Graceful degradation**:
+   ```typescript
+   try {
+     await sendCustomerConfirm({ lead, booking, icsContent });
+   } catch (error) {
+     console.error('[EMAIL] Failed to send customer confirmation:', error);
+     // Booking still confirmed - don't block API response
+   }
+   ```
+
+2. **Logging for manual follow-up**:
+   ```typescript
+   console.log(`[BOOKING] Lead ${lead.id} marked BOOKED`);
+   console.log(`[BOOKING] Customer: ${lead.email || 'NO EMAIL'}`);
+   console.log(`[BOOKING] Service: ${booking.service} on ${booking.date}`);
+   ```
+
+3. **Email deliverability**:
+   - Set up SPF record: `v=spf1 include:_spf.resend.com ~all`
+   - Add DKIM signing (Resend handles automatically)
+   - Use verified domain in EMAIL_FROM (e.g., `bookings@yourdomain.com`)
+
+4. **Retry logic** (future):
+   ```typescript
+   // Add to job queue if initial send fails
+   if (!emailSent) await queueEmailRetry(lead.id, 'customer_confirm');
+   ```
+
+**Detection**:
+- Monitor Resend dashboard for bounce/spam rates
+- Check Vercel logs for `[EMAIL] Failed` errors
+- Track `emails_sent` vs `bookings_confirmed` metric
+
+**PII Safety**:
+- Customer email & phone only in owner summary (not logged to Sentry)
+- Full transcript only sent to owner email, not customer
+- No PII in email subject lines
+
+---
+
+### Risk 7.2: ICS Calendar Invite Issues
+**Severity**: 🟡 Medium  
+**Probability**: Low (10%)  
+**Impact**: Calendar invite doesn't import or shows wrong time
+
+**Failure Scenarios**:
+- Timezone mismatch (UTC vs local time)
+- Invalid ISO 8601 format
+- Email client doesn't recognize .ics attachment
+- Customer uses old email client (Outlook 2003)
+
+**Mitigation**:
+1. **Use absolute UTC times**:
+   ```typescript
+   // Always convert to UTC with 'Z' suffix
+   const dtstart = formatICSDate(new Date(event.start)); // => 20251115T140000Z
+   ```
+
+2. **RFC 5545 compliance**:
+   - Include required fields: UID, DTSTAMP, DTSTART, DTEND
+   - Escape special chars in text fields (commas, semicolons, newlines)
+   - Use CRLF line endings (`\r\n`)
+
+3. **Test across clients**:
+   - ✅ Google Calendar (web + mobile)
+   - ✅ Apple Calendar (iOS + macOS)
+   - ✅ Outlook (web + desktop)
+   - ⚠️ Outlook 2003 (may not support REQUEST method)
+
+4. **Fallback to plain text**:
+   - Email body includes date/time in human-readable format
+   - Customer can manually add to calendar if .ics fails
+
+**Detection**:
+- Ask customers: "Did you get the calendar invite?"
+- Monitor support tickets for "calendar" mentions
+
+---
+
+### Risk 7.3: Owner Email Overload
+**Severity**: 🟢 Low  
+**Probability**: Medium (30% if business grows)  
+**Impact**: Owner misses urgent bookings in flood of emails
+
+**Failure Scenarios**:
+- 50+ bookings/day = inbox chaos
+- Critical bookings buried in email thread
+- Owner on vacation, emails pile up
+
+**Mitigation**:
+1. **Email subject priority**:
+   ```typescript
+   // High-value bookings get 🔥 emoji
+   const subject = booking.price >= 150
+     ? `🔥 Premium Booking: ${lead.name} - ${booking.service}`
+     : `🚗 New Booking: ${lead.name} - ${booking.service}`;
+   ```
+
+2. **Digest mode** (future):
+   ```typescript
+   // Send one email per day with all bookings
+   DIGEST_MODE=true // env var to enable
+   ```
+
+3. **Dashboard over email**:
+   - Owner dashboard shows all BOOKED leads
+   - Email is notification, not source of truth
+
+4. **Mobile push notifications** (future):
+   - Integrate Twilio/SendGrid push notifications
+   - Owner gets phone alert for high-value bookings
+
+---
+
+## 8. Future Risks (Post-Launch)
+
+### Risk 8.1: Scaling to 1000+ Leads/Day
 **When**: 6-12 months after launch  
 **Mitigation**:
 - Add Redis caching layer
 - Move to Vercel Pro (more database connections)
 - Implement job queue (BullMQ) for AI calls
 
-### Risk 7.2: Multi-Tenant Expansion
+### Risk 8.2: Multi-Tenant Expansion
 **When**: If offering white-label solution  
 **Mitigation**:
 - Add `business_id` to all tables
 - Implement row-level security in Postgres
 - Separate API keys per tenant
 
-### Risk 7.3: AI Cost Explosion
+### Risk 8.3: AI Cost Explosion
 **When**: If viral growth or abuse  
 **Mitigation**:
 - Add rate limiting per IP (10 requests/min)
@@ -773,11 +902,12 @@
 **Top 3 Risks to Address Immediately**:
 1. 🔴 **Rotate exposed API key** (ANTHROPIC_API_KEY in git)
 2. 🔴 **Add database transaction handling** (prevent partial writes)
-3. 🟠 **Implement SMS opt-out mechanism** (TCPA compliance)
+3. 🟠 **Implement email deliverability** (SPF/DKIM records)
 
 **Ongoing Monitoring**:
 - Daily: Check Vercel logs for errors
-- Weekly: Review Sentry issues
+- Weekly: Review Sentry issues & Resend dashboard
+
 - Monthly: Audit environment variables
 
 **Next Review Date**: December 10, 2025 (after refactor completion)

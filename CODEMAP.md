@@ -82,6 +82,19 @@
   - Single function: `callClaudeForLead()` returns hardcoded mock
   - **TODO**: Delete this file (replaced by `conductor.ts`)
 
+### Integrations (`lib/integrations/`)
+- **`ics.ts`** - iCalendar (.ics) file generation
+  - `createICS()` - Generate RFC 5545 compliant calendar events
+  - Supports absolute ISO times, timezone offsets, attendees, UID, DTSTAMP
+  - Used for booking confirmation calendar invites
+  
+- **`email.ts`** - Email service with Resend/SMTP fallback
+  - `sendOwnerSummary()` - Send booking notification to owner with ICS attachment
+  - `sendCustomerConfirm()` - Send booking confirmation to customer with ICS attachment
+  - Uses Resend API if `RESEND_API_KEY` present, otherwise SMTP (requires nodemailer)
+  - Includes Google Maps links for addresses, HTML + text versions
+  - **PII Safety**: Logs minimal info, full transcript only sent to owner
+
 ### Configuration (`backend/config/`)
 - **`kb.yaml`** - Knowledge base for AI
   - Business name, service area ZIP codes
@@ -299,10 +312,15 @@
 ### Required
 - **`ANTHROPIC_API_KEY`** - Claude API key (get from console.anthropic.com)
 
+### Email & Notifications (Pilot-Ready)
+- **`EMAIL_FROM`** - Sender email address (e.g., `no-reply@yourdomain.com`)
+- **`OWNER_EMAIL`** - Owner email for booking notifications
+- **`RESEND_API_KEY`** - Resend API key (recommended, get from resend.com)
+  - OR use SMTP fallback: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+
 ### Optional (Not Yet Used)
 - `DATABASE_URL` - Postgres connection string (when DB is added)
 - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` - For SMS (future)
-- `SENDGRID_API_KEY` - For email (future)
 - `NEXT_PUBLIC_APP_URL` - For canonical URLs (future)
 
 ### Current Setup
