@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/leads/[id]/owner-assist/route": "/api/leads/[id]/owner-assist",
+  "/api/leads/[id]/messages/route": "/api/leads/[id]/messages",
+  "/api/leads/owner-summary/route": "/api/leads/owner-summary",
+  "/api/leads/[id]/welcome/route": "/api/leads/[id]/welcome",
+  "/api/leads/route": "/api/leads",
+  "/api/leads/summary/route": "/api/leads/summary",
+  "/demo/page": "/demo",
+  "/page": "/",
+  "/owner/page": "/owner"
+}
