@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  // Disable symlinks to work around OneDrive issues
+  experimental: {
+    turbo: {
+      resolveAlias: {},
+    },
+  },
+};
 
 export default nextConfig;

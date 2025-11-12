@@ -1,3 +1,19 @@
 .DS_Store
 frontdesk/
 .vercel
+
+# Next.js
+.next/
+node_modules/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Temp/backup
+backend/
+env.example
