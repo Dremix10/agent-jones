@@ -1,3 +1,5 @@
 .DS_Store
 frontdesk/
 .vercel
+*.env.local
+.env.local
