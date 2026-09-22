@@ -1,6 +1,6 @@
 # AI Front Desk
 
-An AI-powered front desk for local service businesses: it qualifies inbound leads through natural conversation, checks availability against a knowledge base, and books the appointment — no dashboard clicking required on the business side. Built as a hackathon project, prototyped against a Houston car-detailing business.
+An AI-powered front desk for local service businesses: it qualifies inbound leads through natural conversation, checks availability against a knowledge base, and books the appointment — no dashboard clicking required on the business side. Built as a hackathon project, prototyped against a Houston car-detailing business. The core idea proved out here — Claude-driven lead qualification and booking — is what grew into [DOBI](https://www.bookwithdobi.com), the production AI booking assistant now running across GrowZone's client businesses.
 
 `[FILL — screenshot or short demo GIF: /demo chat flow and /owner dashboard]`
 
@@ -28,4 +28,4 @@ Prints the local port (usually `http://localhost:3000`). Toggle `USE_MOCK` in `b
 
 ## Team
 
-Built at a hackathon with collaborators handling backend/AI, frontend/UI, and integration in parallel. `[FILL — credit specifics if you want them named]`
+Built at a hackathon with collaborators handling backend/AI, frontend/UI, and integration in parallel.
