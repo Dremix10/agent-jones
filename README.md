@@ -2,9 +2,7 @@
 
 An AI-powered front desk for local service businesses: it qualifies inbound leads through natural conversation, checks availability against a knowledge base, and books the appointment — no dashboard clicking required on the business side. Built as a hackathon project, prototyped against a Houston car-detailing business. The core idea proved out here — Claude-driven lead qualification and booking — is what grew into [DOBI](https://www.bookwithdobi.com), the production AI booking assistant now running across GrowZone's client businesses.
 
-`[FILL — screenshot or short demo GIF: /demo chat flow and /owner dashboard]`
-
-**Live demo:** `[FILL — deployed URL, if any]` · otherwise run locally (below).
+**See it live:** this prototype's concept is what's running in production today — [try the DOBI demo](https://www.bookwithdobi.com/chat/cv-sample). To run this original prototype itself, see below.
 
 ## Stack
 
